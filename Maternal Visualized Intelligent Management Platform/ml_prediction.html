@@ -1,0 +1,742 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>机器学习预测中心 - 医疗数据分析系统</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <style>
+        .gradient-bg {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        .card-hover {
+            transition: all 0.3s ease;
+        }
+        .card-hover:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+        }
+        .loading-spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #3498db;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .result-card {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+        }
+        .success-card {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+        }
+        .warning-card {
+            background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+            color: white;
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <!-- 导航栏 -->
+    <nav class="gradient-bg shadow-lg">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <i class="fas fa-brain text-white text-2xl mr-3"></i>
+                    <h1 class="text-white text-xl font-bold">机器学习预测中心</h1>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <button onclick="goBack()" class="text-white hover:text-gray-200 transition">
+                        <i class="fas fa-arrow-left mr-2"></i>返回主系统
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="max-w-7xl mx-auto px-4 py-8">
+        <!-- 系统状态卡片 -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+            <div class="bg-white rounded-lg shadow-md p-6 card-hover">
+                <div class="flex items-center">
+                    <div class="p-3 bg-blue-100 rounded-full">
+                        <i class="fas fa-robot text-blue-600 text-xl"></i>
+                    </div>
+                    <div class="ml-4">
+                        <h3 class="text-gray-500 text-sm">模型状态</h3>
+                        <p id="model-status" class="text-lg font-semibold text-gray-800">检查中...</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="bg-white rounded-lg shadow-md p-6 card-hover">
+                <div class="flex items-center">
+                    <div class="p-3 bg-green-100 rounded-full">
+                        <i class="fas fa-chart-line text-green-600 text-xl"></i>
+                    </div>
+                    <div class="ml-4">
+                        <h3 class="text-gray-500 text-sm">预测准确率</h3>
+                        <p id="accuracy-rate" class="text-lg font-semibold text-gray-800">--%</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="bg-white rounded-lg shadow-md p-6 card-hover">
+                <div class="flex items-center">
+                    <div class="p-3 bg-purple-100 rounded-full">
+                        <i class="fas fa-users text-purple-600 text-xl"></i>
+                    </div>
+                    <div class="ml-4">
+                        <h3 class="text-gray-500 text-sm">患者聚类</h3>
+                        <p id="cluster-count" class="text-lg font-semibold text-gray-800">-- 组</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="bg-white rounded-lg shadow-md p-6 card-hover">
+                <div class="flex items-center">
+                    <div class="p-3 bg-orange-100 rounded-full">
+                        <i class="fas fa-heartbeat text-orange-600 text-xl"></i>
+                    </div>
+                    <div class="ml-4">
+                        <h3 class="text-gray-500 text-sm">生命体征预测</h3>
+                        <p id="vital-status" class="text-lg font-semibold text-gray-800">就绪</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 主要功能区域 -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <!-- 疾病预测 -->
+            <div class="bg-white rounded-lg shadow-lg p-6">
+                <div class="flex items-center mb-6">
+                    <i class="fas fa-stethoscope text-blue-600 text-2xl mr-3"></i>
+                    <h2 class="text-xl font-bold text-gray-800">疾病智能预测</h2>
+                </div>
+                
+                <form id="disease-prediction-form" class="space-y-4">
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">体温 (°C)</label>
+                            <input type="number" id="temperature" step="0.1" value="36.5" 
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">收缩压 (mmHg)</label>
+                            <input type="number" id="systolic" value="120" 
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">舒张压 (mmHg)</label>
+                            <input type="number" id="diastolic" value="80" 
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">心率 (bpm)</label>
+                            <input type="number" id="heart-rate" value="70" 
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">呼吸频率 (次/分)</label>
+                            <input type="number" id="respiratory-rate" value="16" 
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">血氧饱和度 (%)</label>
+                            <input type="number" id="oxygen-saturation" value="98" 
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+                    </div>
+                    
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">医院ID</label>
+                            <select id="hospital-id" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                <option value="1">医院1</option>
+                                <option value="2">医院2</option>
+                                <option value="3">医院3</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">科室ID</label>
+                            <select id="department-id" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                <option value="1">内科</option>
+                                <option value="2">外科</option>
+                                <option value="3">儿科</option>
+                                <option value="4">妇产科</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <button type="submit" class="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition duration-200">
+                        <i class="fas fa-search mr-2"></i>开始预测
+                    </button>
+                </form>
+                
+                <!-- 预测结果 -->
+                <div id="disease-result" class="mt-6 hidden">
+                    <div class="result-card rounded-lg p-6">
+                        <h3 class="text-lg font-bold mb-4">预测结果</h3>
+                        <div id="disease-prediction-output"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 生命体征预测 -->
+            <div class="bg-white rounded-lg shadow-lg p-6">
+                <div class="flex items-center mb-6">
+                    <i class="fas fa-heartbeat text-red-600 text-2xl mr-3"></i>
+                    <h2 class="text-xl font-bold text-gray-800">生命体征预测</h2>
+                </div>
+                
+                <div class="space-y-4">
+                    <div class="bg-gray-50 p-4 rounded-lg">
+                        <h3 class="font-semibold text-gray-700 mb-3">历史数据输入</h3>
+                        <div id="vital-history-input">
+                            <div class="space-y-3">
+                                <div class="grid grid-cols-3 gap-2 text-sm">
+                                    <div><strong>时间点 1:</strong></div>
+                                    <div>体温: <input type="number" id="temp1" step="0.1" value="36.8" class="w-20 px-1 py-0.5 border rounded">°C</div>
+                                    <div>血压: <input type="number" id="bp1_1" value="120" class="w-16 px-1 py-0.5 border rounded">/<input type="number" id="bp1_2" value="80" class="w-16 px-1 py-0.5 border rounded">mmHg</div>
+                                </div>
+                                <div class="grid grid-cols-3 gap-2 text-sm">
+                                    <div><strong>时间点 2:</strong></div>
+                                    <div>体温: <input type="number" id="temp2" step="0.1" value="37.0" class="w-20 px-1 py-0.5 border rounded">°C</div>
+                                    <div>血压: <input type="number" id="bp2_1" value="122" class="w-16 px-1 py-0.5 border rounded">/<input type="number" id="bp2_2" value="81" class="w-16 px-1 py-0.5 border rounded">mmHg</div>
+                                </div>
+                                <div class="grid grid-cols-3 gap-2 text-sm">
+                                    <div><strong>时间点 3:</strong></div>
+                                    <div>体温: <input type="number" id="temp3" step="0.1" value="37.2" class="w-20 px-1 py-0.5 border rounded">°C</div>
+                                    <div>血压: <input type="number" id="bp3_1" value="125" class="w-16 px-1 py-0.5 border rounded">/<input type="number" id="bp3_2" value="82" class="w-16 px-1 py-0.5 border rounded">mmHg</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <button onclick="predictVitalSigns()" class="w-full bg-red-600 text-white py-2 px-4 rounded-md hover:bg-red-700 transition duration-200">
+                        <i class="fas fa-chart-line mr-2"></i>预测下一时间点
+                    </button>
+                </div>
+                
+                <!-- 生命体征预测结果 -->
+                <div id="vital-result" class="mt-6 hidden">
+                    <div class="success-card rounded-lg p-6">
+                        <h3 class="text-lg font-bold mb-4">预测结果</h3>
+                        <div id="vital-prediction-output"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 模型训练和管理 -->
+        <div class="mt-8 bg-white rounded-lg shadow-lg p-6">
+            <div class="flex items-center justify-between mb-6">
+                <div class="flex items-center">
+                    <i class="fas fa-cogs text-purple-600 text-2xl mr-3"></i>
+                    <h2 class="text-xl font-bold text-gray-800">模型管理</h2>
+                </div>
+                <div class="space-x-4">
+                    <button onclick="trainModel('all')" class="bg-purple-600 text-white px-4 py-2 rounded-md hover:bg-purple-700 transition">
+                        <i class="fas fa-play mr-2"></i>训练所有模型
+                    </button>
+                    <button onclick="evaluateModels()" class="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 transition">
+                        <i class="fas fa-chart-bar mr-2"></i>模型评估
+                    </button>
+                </div>
+            </div>
+            
+            <!-- 训练进度 -->
+            <div id="training-progress" class="hidden">
+                <div class="flex items-center justify-center py-8">
+                    <div class="loading-spinner"></div>
+                    <span class="ml-4 text-gray-600">正在训练模型，请稍候...</span>
+                </div>
+            </div>
+            
+            <!-- 模型信息 -->
+            <div id="model-info" class="grid grid-cols-1 md:grid-cols-3 gap-6 mt-6">
+                <!-- 模型信息将在这里动态显示 -->
+            </div>
+        </div>
+
+        <!-- 患者聚类分析 -->
+        <div class="mt-8 bg-white rounded-lg shadow-lg p-6">
+            <div class="flex items-center mb-6">
+                <i class="fas fa-users text-indigo-600 text-2xl mr-3"></i>
+                <h2 class="text-xl font-bold text-gray-800">患者聚类分析</h2>
+            </div>
+            
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <div>
+                    <button onclick="analyzePatientCluster()" class="w-full bg-indigo-600 text-white py-2 px-4 rounded-md hover:bg-indigo-700 transition duration-200 mb-4">
+                        <i class="fas fa-search mr-2"></i>分析当前患者聚类
+                    </button>
+                    
+                    <div id="cluster-result" class="hidden">
+                        <div class="warning-card rounded-lg p-6">
+                            <h3 class="text-lg font-bold mb-4">聚类结果</h3>
+                            <div id="cluster-analysis-output"></div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div>
+                    <canvas id="cluster-chart" width="400" height="300"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 提示消息 -->
+    <div id="notification" class="fixed top-4 right-4 hidden z-50">
+        <div class="bg-white rounded-lg shadow-lg p-4 max-w-sm">
+            <div class="flex items-center">
+                <div id="notification-icon"></div>
+                <div class="ml-3">
+                    <p id="notification-message" class="text-sm text-gray-700"></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // API基础URL
+        const API_BASE = '/api/ml';
+        
+        // 页面加载时初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            checkMLStatus();
+            loadModelInfo();
+            initClusterChart();
+        });
+
+        // 检查机器学习服务状态
+        async function checkMLStatus() {
+            try {
+                const response = await axios.get(`${API_BASE}/status`);
+                const data = response.data;
+                
+                if (data.status === 'success') {
+                    document.getElementById('model-status').textContent = '正常运行';
+                    document.getElementById('model-status').className = 'text-lg font-semibold text-green-600';
+                    
+                    // 更新模型状态
+                    const models = data.models;
+                    let modelCount = 0;
+                    for (let key in models) {
+                        if (models[key]) modelCount++;
+                    }
+                    document.getElementById('cluster-count').textContent = modelCount + ' 个';
+                } else {
+                    document.getElementById('model-status').textContent = '服务异常';
+                    document.getElementById('model-status').className = 'text-lg font-semibold text-red-600';
+                }
+            } catch (error) {
+                document.getElementById('model-status').textContent = '连接失败';
+                document.getElementById('model-status').className = 'text-lg font-semibold text-red-600';
+            }
+        }
+
+        // 疾病预测表单提交
+        document.getElementById('disease-prediction-form').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const patientData = {
+                hospital_id: parseInt(document.getElementById('hospital-id').value),
+                department_id: parseInt(document.getElementById('department-id').value),
+                visit_type: 1,
+                temperature: parseFloat(document.getElementById('temperature').value),
+                blood_pressure_systolic: parseInt(document.getElementById('systolic').value),
+                blood_pressure_diastolic: parseInt(document.getElementById('diastolic').value),
+                heart_rate: parseInt(document.getElementById('heart-rate').value),
+                respiratory_rate: parseInt(document.getElementById('respiratory-rate').value),
+                oxygen_saturation: parseInt(document.getElementById('oxygen-saturation').value),
+                visit_date: new Date().toISOString()
+            };
+            
+            try {
+                const response = await axios.post(`${API_BASE}/predict/disease`, patientData);
+                const result = response.data;
+                
+                if (result.status === 'success') {
+                    displayDiseaseResult(result.data);
+                } else {
+                    showNotification('预测失败: ' + result.message, 'error');
+                }
+            } catch (error) {
+                showNotification('预测请求失败: ' + error.message, 'error');
+            }
+        });
+
+        // 显示疾病预测结果
+        function displayDiseaseResult(data) {
+            const resultDiv = document.getElementById('disease-result');
+            const outputDiv = document.getElementById('disease-prediction-output');
+            
+            let html = `
+                <div class="space-y-3">
+                    <div>
+                        <span class="font-semibold">预测疾病:</span> 
+                        <span class="text-xl">${data.predicted_disease}</span>
+                    </div>
+                    <div>
+                        <span class="font-semibold">置信度:</span> 
+                        <span class="text-lg">${(data.confidence * 100).toFixed(2)}%</span>
+                    </div>
+                    <div class="mt-4">
+                        <h4 class="font-semibold mb-2">所有可能疾病概率:</h4>
+                        <div class="space-y-2">
+            `;
+            
+            for (let disease in data.all_probabilities) {
+                const probability = (data.all_probabilities[disease] * 100).toFixed(2);
+                html += `
+                    <div class="flex justify-between items-center">
+                        <span>${disease}</span>
+                        <div class="flex items-center">
+                            <div class="w-24 bg-white bg-opacity-30 rounded-full h-2 mr-2">
+                                <div class="bg-white h-2 rounded-full" style="width: ${probability}%"></div>
+                            </div>
+                            <span class="text-sm">${probability}%</span>
+                        </div>
+                    </div>
+                `;
+            }
+            
+            html += `
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            outputDiv.innerHTML = html;
+            resultDiv.classList.remove('hidden');
+            
+            showNotification('疾病预测完成！', 'success');
+        }
+
+        // 生命体征预测
+        async function predictVitalSigns() {
+            const historicalData = [
+                {
+                    temperature: parseFloat(document.getElementById('temp1').value),
+                    blood_pressure_systolic: parseInt(document.getElementById('bp1_1').value),
+                    blood_pressure_diastolic: parseInt(document.getElementById('bp1_2').value),
+                    heart_rate: 72,
+                    respiratory_rate: 16,
+                    oxygen_saturation: 98,
+                    measure_time: new Date(Date.now() - 7200000).toISOString() // 2小时前
+                },
+                {
+                    temperature: parseFloat(document.getElementById('temp2').value),
+                    blood_pressure_systolic: parseInt(document.getElementById('bp2_1').value),
+                    blood_pressure_diastolic: parseInt(document.getElementById('bp2_2').value),
+                    heart_rate: 74,
+                    respiratory_rate: 17,
+                    oxygen_saturation: 97,
+                    measure_time: new Date(Date.now() - 3600000).toISOString() // 1小时前
+                },
+                {
+                    temperature: parseFloat(document.getElementById('temp3').value),
+                    blood_pressure_systolic: parseInt(document.getElementById('bp3_1').value),
+                    blood_pressure_diastolic: parseInt(document.getElementById('bp3_2').value),
+                    heart_rate: 75,
+                    respiratory_rate: 18,
+                    oxygen_saturation: 97,
+                    measure_time: new Date().toISOString()
+                }
+            ];
+            
+            try {
+                const response = await axios.post(`${API_BASE}/predict/vital-signs`, historicalData);
+                const result = response.data;
+                
+                if (result.status === 'success') {
+                    displayVitalResult(result.data);
+                } else {
+                    showNotification('预测失败: ' + result.message, 'error');
+                }
+            } catch (error) {
+                showNotification('预测请求失败: ' + error.message, 'error');
+            }
+        }
+
+        // 显示生命体征预测结果
+        function displayVitalResult(data) {
+            const resultDiv = document.getElementById('vital-result');
+            const outputDiv = document.getElementById('vital-prediction-output');
+            
+            const html = `
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <span class="font-semibold">预测体温:</span> 
+                        <span class="text-lg">${data.predicted_temperature.toFixed(1)}°C</span>
+                    </div>
+                    <div>
+                        <span class="font-semibold">预测血压:</span> 
+                        <span class="text-lg">${data.predicted_blood_pressure_systolic}/${data.predicted_blood_pressure_diastolic} mmHg</span>
+                    </div>
+                    <div>
+                        <span class="font-semibold">预测心率:</span> 
+                        <span class="text-lg">${data.predicted_heart_rate} bpm</span>
+                    </div>
+                    <div>
+                        <span class="font-semibold">预测呼吸:</span> 
+                        <span class="text-lg">${data.predicted_respiratory_rate} 次/分</span>
+                    </div>
+                    <div class="col-span-2">
+                        <span class="font-semibold">预测血氧:</span> 
+                        <span class="text-lg">${data.predicted_oxygen_saturation}%</span>
+                    </div>
+                </div>
+            `;
+            
+            outputDiv.innerHTML = html;
+            resultDiv.classList.remove('hidden');
+            
+            showNotification('生命体征预测完成！', 'success');
+        }
+
+        // 训练模型
+        async function trainModel(modelType) {
+            const progressDiv = document.getElementById('training-progress');
+            progressDiv.classList.remove('hidden');
+            
+            try {
+                const response = await axios.post(`${API_BASE}/train`, { model_type: modelType });
+                const result = response.data;
+                
+                if (result.status === 'success') {
+                    showNotification('模型训练完成！', 'success');
+                    loadModelInfo();
+                    checkMLStatus();
+                    
+                    // 更新准确率显示
+                    if (result.results.disease_classification && result.results.disease_classification.accuracy) {
+                        const accuracy = (result.results.disease_classification.accuracy * 100).toFixed(2);
+                        document.getElementById('accuracy-rate').textContent = accuracy + '%';
+                    }
+                } else {
+                    showNotification('训练失败: ' + result.message, 'error');
+                }
+            } catch (error) {
+                showNotification('训练请求失败: ' + error.message, 'error');
+            } finally {
+                progressDiv.classList.add('hidden');
+            }
+        }
+
+        // 评估模型
+        async function evaluateModels() {
+            try {
+                const response = await axios.post(`${API_BASE}/evaluate`, { model_type: 'disease' });
+                const result = response.data;
+                
+                if (result.status === 'success') {
+                    showNotification('模型评估完成！', 'success');
+                    console.log('评估结果:', result.data);
+                } else {
+                    showNotification('评估失败: ' + result.message, 'error');
+                }
+            } catch (error) {
+                showNotification('评估请求失败: ' + error.message, 'error');
+            }
+        }
+
+        // 加载模型信息
+        async function loadModelInfo() {
+            try {
+                const response = await axios.get(`${API_BASE}/models/info`);
+                const result = response.data;
+                
+                if (result.status === 'success') {
+                    displayModelInfo(result.data);
+                }
+            } catch (error) {
+                console.error('加载模型信息失败:', error);
+            }
+        }
+
+        // 显示模型信息
+        function displayModelInfo(data) {
+            const infoDiv = document.getElementById('model-info');
+            let html = '';
+            
+            for (let modelName in data.models) {
+                const model = data.models[modelName];
+                html += `
+                    <div class="bg-gray-50 rounded-lg p-4">
+                        <h3 class="font-semibold text-gray-700 mb-2">${getModelDisplayName(modelName)}</h3>
+                        <div class="text-sm text-gray-600">
+                            <p>类型: ${model.type || '未知'}</p>
+                            <p>状态: <span class="text-green-600">已加载</span></p>
+                        </div>
+                    </div>
+                `;
+            }
+            
+            infoDiv.innerHTML = html;
+        }
+
+        // 获取模型显示名称
+        function getModelDisplayName(modelName) {
+            const names = {
+                'disease_classifier': '疾病分类器',
+                'vital_signs_predictor': '生命体征预测器',
+                'patient_clustering': '患者聚类器'
+            };
+            return names[modelName] || modelName;
+        }
+
+        // 分析患者聚类
+        async function analyzePatientCluster() {
+            const patientData = {
+                hospital_id: 1,
+                department_id: 1,
+                visit_type: 1,
+                temperature: 37.2,
+                blood_pressure_systolic: 125,
+                blood_pressure_diastolic: 82,
+                heart_rate: 75,
+                respiratory_rate: 18,
+                oxygen_saturation: 97,
+                visit_date: new Date().toISOString()
+            };
+            
+            try {
+                const response = await axios.post(`${API_BASE}/cluster/patient`, patientData);
+                const result = response.data;
+                
+                if (result.status === 'success') {
+                    displayClusterResult(result.data);
+                } else {
+                    showNotification('聚类分析失败: ' + result.message, 'error');
+                }
+            } catch (error) {
+                showNotification('聚类分析请求失败: ' + error.message, 'error');
+            }
+        }
+
+        // 显示聚类结果
+        function displayClusterResult(data) {
+            const resultDiv = document.getElementById('cluster-result');
+            const outputDiv = document.getElementById('cluster-analysis-output');
+            
+            const html = `
+                <div class="space-y-3">
+                    <div>
+                        <span class="font-semibold">患者所属群组:</span> 
+                        <span class="text-xl">${data.cluster_name}</span>
+                    </div>
+                    <div>
+                        <span class="font-semibold">群组ID:</span> 
+                        <span class="text-lg">${data.cluster_id}</span>
+                    </div>
+                    <div class="mt-4 p-3 bg-white bg-opacity-20 rounded">
+                        <p class="text-sm">该群组患者具有相似的临床特征和风险因素，建议采用相似的诊疗方案。</p>
+                    </div>
+                </div>
+            `;
+            
+            outputDiv.innerHTML = html;
+            resultDiv.classList.remove('hidden');
+            
+            showNotification('患者聚类分析完成！', 'success');
+        }
+
+        // 初始化聚类图表
+        function initClusterChart() {
+            const ctx = document.getElementById('cluster-chart').getContext('2d');
+            window.clusterChart = new Chart(ctx, {
+                type: 'scatter',
+                data: {
+                    datasets: [{
+                        label: '患者聚类分布',
+                        data: generateRandomClusterData(),
+                        backgroundColor: 'rgba(99, 102, 241, 0.6)',
+                        borderColor: 'rgba(99, 102, 241, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: '患者聚类可视化'
+                        }
+                    },
+                    scales: {
+                        x: {
+                            title: {
+                                display: true,
+                                text: '特征1'
+                            }
+                        },
+                        y: {
+                            title: {
+                                display: true,
+                                text: '特征2'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // 生成随机聚类数据（示例）
+        function generateRandomClusterData() {
+            const data = [];
+            for (let i = 0; i < 50; i++) {
+                data.push({
+                    x: Math.random() * 100,
+                    y: Math.random() * 100
+                });
+            }
+            return data;
+        }
+
+        // 显示通知
+        function showNotification(message, type = 'info') {
+            const notification = document.getElementById('notification');
+            const icon = document.getElementById('notification-icon');
+            const messageEl = document.getElementById('notification-message');
+            
+            // 设置图标
+            const icons = {
+                success: '<i class="fas fa-check-circle text-green-500 text-xl"></i>',
+                error: '<i class="fas fa-exclamation-circle text-red-500 text-xl"></i>',
+                info: '<i class="fas fa-info-circle text-blue-500 text-xl"></i>',
+                warning: '<i class="fas fa-exclamation-triangle text-yellow-500 text-xl"></i>'
+            };
+            
+            icon.innerHTML = icons[type] || icons.info;
+            messageEl.textContent = message;
+            
+            // 显示通知
+            notification.classList.remove('hidden');
+            
+            // 3秒后自动隐藏
+            setTimeout(() => {
+                notification.classList.add('hidden');
+            }, 3000);
+        }
+
+        // 返回主系统
+        function goBack() {
+            window.location.href = '/';
+        }
+    </script>
+</body>
+</html>

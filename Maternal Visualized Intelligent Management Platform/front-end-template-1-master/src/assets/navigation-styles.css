@@ -1,0 +1,289 @@
+/* 导航栏全局样式变量定义 */
+:root {
+  /* 导航栏尺寸规格 */
+  --sidebar-width: 280px;
+  --sidebar-width-collapsed: 70px;
+  --sidebar-padding: 20px;
+  --sidebar-border-width: 1px;
+  
+  /* 导航栏颜色规格 */
+  --sidebar-bg: rgba(255, 255, 255, 0.95);
+  --sidebar-border-color: rgba(255, 255, 255, 0.2);
+  --sidebar-backdrop-filter: blur(10px);
+  
+  /* 导航菜单项规格 */
+  --menu-item-height: 48px;
+  --menu-item-padding: 12px 16px;
+  --menu-item-margin: 8px;
+  --menu-item-border-radius: 10px;
+  --menu-item-font-size: 14px;
+  --menu-item-icon-size: 16px;
+  --menu-item-icon-width: 20px;
+  --menu-item-icon-margin: 12px;
+  
+  /* 导航标题规格 */
+  --menu-title-font-size: 16px;
+  --menu-title-font-weight: 600;
+  --menu-title-margin-bottom: 15px;
+  --menu-title-padding-bottom: 8px;
+  --menu-title-border-bottom: 2px solid #f0f0f0;
+  
+  /* 导航栏滚动条规格 */
+  --sidebar-scrollbar-width: 6px;
+  --sidebar-scrollbar-track-bg: #f1f1f1;
+  --sidebar-scrollbar-thumb-bg: #ff66a3;
+  --sidebar-scrollbar-thumb-hover-bg: #ff5599;
+  --sidebar-scrollbar-border-radius: 3px;
+  
+  /* 导航栏过渡动画 */
+  --sidebar-transition: all 0.3s ease;
+  --menu-item-transition: all 0.3s ease;
+  
+  /* 响应式断点 */
+  --mobile-breakpoint: 768px;
+  --tablet-breakpoint: 1024px;
+}
+
+/* 统一的侧边栏基础样式 */
+.unified-sidebar {
+  width: var(--sidebar-width);
+  background: var(--sidebar-bg);
+  border-right: var(--sidebar-border-width) solid var(--sidebar-border-color);
+  padding: var(--sidebar-padding);
+  backdrop-filter: var(--sidebar-backdrop-filter);
+  overflow-y: auto;
+  transition: var(--sidebar-transition);
+  position: relative;
+  
+  /* 确保宽度始终固定 */
+  min-width: var(--sidebar-width);
+  max-width: var(--sidebar-width);
+  flex-shrink: 0;
+  
+  /* 滚动条样式 */
+  &::-webkit-scrollbar {
+    width: var(--sidebar-scrollbar-width);
+  }
+  
+  &::-webkit-scrollbar-track {
+    background: var(--sidebar-scrollbar-track-bg);
+    border-radius: var(--sidebar-scrollbar-border-radius);
+  }
+  
+  &::-webkit-scrollbar-thumb {
+    background: var(--sidebar-scrollbar-thumb-bg);
+    border-radius: var(--sidebar-scrollbar-border-radius);
+  }
+  
+  &::-webkit-scrollbar-thumb:hover {
+    background: var(--sidebar-scrollbar-thumb-hover-bg);
+  }
+}
+
+/* 统一的导航菜单容器样式 */
+.unified-navigation-menu {
+  background: transparent;
+  border-radius: 15px;
+  padding: 0;
+  box-shadow: none;
+  max-height: 80vh;
+  overflow-y: auto;
+  
+  .menu-section {
+    margin-bottom: 25px;
+    
+    &:last-child {
+      margin-bottom: 0;
+    }
+    
+    .menu-title {
+      color: #333;
+      font-size: var(--menu-title-font-size);
+      font-weight: var(--menu-title-font-weight);
+      margin-bottom: var(--menu-title-margin-bottom);
+      padding-bottom: var(--menu-title-padding-bottom);
+      border-bottom: var(--menu-title-border-bottom);
+    }
+    
+    .menu-items {
+      display: flex;
+      flex-direction: column;
+      gap: var(--menu-item-margin);
+      
+      .menu-item {
+        display: flex;
+        align-items: center;
+        padding: var(--menu-item-padding);
+        border-radius: var(--menu-item-border-radius);
+        text-decoration: none;
+        color: #555;
+        transition: var(--menu-item-transition);
+        border: 1px solid transparent;
+        height: var(--menu-item-height);
+        box-sizing: border-box;
+        
+        &:hover {
+          background: linear-gradient(135deg, #ff7eb3 0%, #ff66a3 100%);
+          color: white;
+          transform: translateX(5px);
+          box-shadow: 0 4px 15px rgba(255, 102, 163, 0.3);
+        }
+        
+        &.router-link-exact-active {
+          background: linear-gradient(135deg, #ff7eb3 0%, #ff66a3 100%);
+          color: white;
+          box-shadow: 0 4px 15px rgba(255, 102, 163, 0.3);
+        }
+        
+        &.legacy {
+          opacity: 0.7;
+          font-size: 13px;
+          
+          &:hover {
+            opacity: 1;
+          }
+        }
+        
+        i {
+          width: var(--menu-item-icon-width);
+          margin-right: var(--menu-item-icon-margin);
+          font-size: var(--menu-item-icon-size);
+          flex-shrink: 0;
+        }
+        
+        span {
+          font-weight: 500;
+          font-size: var(--menu-item-font-size);
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+        }
+      }
+    }
+  }
+  
+  /* 滚动条样式 */
+  &::-webkit-scrollbar {
+    width: var(--sidebar-scrollbar-width);
+  }
+  
+  &::-webkit-scrollbar-track {
+    background: var(--sidebar-scrollbar-track-bg);
+    border-radius: var(--sidebar-scrollbar-border-radius);
+  }
+  
+  &::-webkit-scrollbar-thumb {
+    background: var(--sidebar-scrollbar-thumb-bg);
+    border-radius: var(--sidebar-scrollbar-border-radius);
+  }
+  
+  &::-webkit-scrollbar-thumb:hover {
+    background: var(--sidebar-scrollbar-thumb-hover-bg);
+  }
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .unified-sidebar {
+    width: 100%;
+    position: fixed;
+    left: -100%;
+    top: 70px;
+    height: calc(100vh - 70px);
+    z-index: 1000;
+    min-width: 100%;
+    max-width: 100%;
+    
+    &.mobile-open {
+      left: 0;
+    }
+  }
+}
+
+/* 内容区域布局适配 */
+.content-with-sidebar {
+  /* 使用flex布局，不需要额外的margin */
+  margin-left: 0;
+  /* 确保内容区域紧贴导航栏 */
+}
+
+/* 当侧边栏隐藏时的内容区域样式 */
+.content-area.full-width {
+  width: 100% !important;
+  margin-left: 0 !important;
+}
+
+/* 确保flex布局正确工作 */
+.main-content {
+  display: flex;
+  position: relative;
+  /* 消除任何默认间距 */
+  gap: 0;
+}
+
+.main-content .sidebar {
+  flex-shrink: 0;
+  /* 确保导航栏不产生额外间距 */
+  margin: 0;
+  padding: var(--sidebar-padding);
+}
+
+.main-content .content-area {
+  flex: 1;
+  min-width: 0; /* 防止flex子项溢出 */
+  /* 消除内容区域与导航栏之间的空白 */
+  margin: 0;
+  padding: 20px;
+}
+
+@media (min-width: 769px) and (max-width: 1024px) {
+  .unified-sidebar {
+    width: calc(var(--sidebar-width) * 0.9);
+    min-width: calc(var(--sidebar-width) * 0.9);
+    max-width: calc(var(--sidebar-width) * 0.9);
+  }
+}
+
+/* 确保在不同页面中导航栏宽度保持一致 */
+.sidebar-width-consistent {
+  width: var(--sidebar-width) !important;
+  min-width: var(--sidebar-width) !important;
+  max-width: var(--sidebar-width) !important;
+  flex-shrink: 0 !important;
+}
+
+/* 内容区域自适应 */
+.content-with-sidebar {
+  margin-left: var(--sidebar-width);
+  transition: var(--sidebar-transition);
+}
+
+.content-with-sidebar.collapsed {
+  margin-left: var(--sidebar-width-collapsed);
+}
+
+/* 移动端内容区域 */
+@media (max-width: 768px) {
+  .content-with-sidebar {
+    margin-left: 0;
+  }
+}
+
+/* 防止内容溢出 */
+.sidebar-overflow-protection {
+  overflow-x: hidden;
+  position: relative;
+}
+
+/* 确保导航栏在所有页面中保持固定位置 */
+.sidebar-fixed-position {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  z-index: 100;
+}
+
+/* 防止导航栏被其他元素覆盖 */
+.sidebar-z-index {
+  z-index: 999;
+}
