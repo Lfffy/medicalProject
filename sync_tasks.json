@@ -1,0 +1,47 @@
+[
+  {
+    "id": "medical_records_sync",
+    "source_type": "json",
+    "source_path": "data/medical_records.json",
+    "target_table": "medical_records",
+    "schema_name": "medical_records",
+    "priority": 1,
+    "retry_count": 2,
+    "max_retries": 3,
+    "last_sync_time": "2025-11-15T22:33:19.800738",
+    "next_sync_time": "2025-11-15T22:53:19.874100",
+    "status": "failed",
+    "error_message": "'database'",
+    "sync_interval": 300
+  },
+  {
+    "id": "vital_signs_sync",
+    "source_type": "json",
+    "source_path": "data/vital_signs.json",
+    "target_table": "vital_signs",
+    "schema_name": "vital_signs",
+    "priority": 2,
+    "retry_count": 2,
+    "max_retries": 3,
+    "last_sync_time": "2025-11-15T22:33:19.800738",
+    "next_sync_time": "2025-11-15T22:53:19.866843",
+    "status": "failed",
+    "error_message": "'database'",
+    "sync_interval": 180
+  },
+  {
+    "id": "maternal_info_sync",
+    "source_type": "json",
+    "source_path": "data/maternal_info.json",
+    "target_table": "maternal_info",
+    "schema_name": "maternal_info",
+    "priority": 3,
+    "retry_count": 2,
+    "max_retries": 3,
+    "last_sync_time": "2025-11-15T22:33:19.800738",
+    "next_sync_time": "2025-11-15T22:53:19.859838",
+    "status": "failed",
+    "error_message": "'database'",
+    "sync_interval": 600
+  }
+]
