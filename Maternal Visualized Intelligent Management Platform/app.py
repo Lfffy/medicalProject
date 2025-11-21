@@ -40,8 +40,8 @@ from hospital_api import hospital_bp
 # 导入监控API蓝图
 from monitoring_api import monitoring_bp
 
-# 导入机器学习API蓝图
-from ml_api import ml_bp
+# 导入机器学习API蓝图 - 暂时注释掉
+# from ml_api import ml_bp
 
 # 注册数据管理API蓝图
 app.register_blueprint(data_bp)
@@ -67,16 +67,16 @@ app.register_blueprint(hospital_bp)
 # 注册监控API蓝图
 app.register_blueprint(monitoring_bp)
 
-# 注册机器学习API蓝图
-app.register_blueprint(ml_bp)
+# 注册机器学习API蓝图 - 暂时注释掉
+# app.register_blueprint(ml_bp)
 
 # 初始化AI聊天服务
 from ai_chat_service import init_ai_chat_service
 ai_chat_service = init_ai_chat_service(socketio)
 
-# 初始化机器学习预测器
-from ml_api import init_ml_predictor
-init_ml_predictor()
+# 初始化机器学习预测器 - 暂时注释掉
+# from ml_api import init_ml_predictor
+# init_ml_predictor()
 
 # SQLite数据库配置
 import sqlite3

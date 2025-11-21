@@ -58,9 +58,10 @@ dist/
 *.egg
 
 # 机器学习模型文件（可选，如果使用Git LFS管理）
-# *.h5
-# *.joblib
-# *.pkl
+# 为了减小仓库体积，忽略大型模型文件
+*.h5
+*.joblib
+*.pkl
 
 # Node.js相关
 node_modules/
