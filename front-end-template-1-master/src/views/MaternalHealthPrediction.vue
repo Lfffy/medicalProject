@@ -65,7 +65,10 @@
               <h2 class="section-title"><i class="fas fa-clipboard-list" aria-hidden="true"></i> 个人信息录入</h2>
               <p class="section-description">请准确填写以下信息，以便获得更精准的预测结果</p>
             </div>
-            <MaternalRiskPrediction @predictionSuccess="handlePredictionSuccess" />
+            <MaternalRiskPrediction 
+              @predictionSuccess="handlePredictionSuccess"
+              @predictionError="handlePredictionError"
+            />
           </div>
           
           <!-- 结果展示区域 -->
@@ -176,6 +179,34 @@ export default {
   },
   
   methods: {
+    // 处理表单提交
+    async handleFormSubmit(formData) {
+      try {
+        // 显示加载状态
+        this.showNotification('info', '正在进行风险评估，请稍候...');
+        
+        // 调用后端API进行预测
+        const result = await maternalPredictionService.predictComprehensiveRisk(formData);
+        
+        if (result.success) {
+          // 预测成功，显示结果
+          this.handlePredictionSuccess(result.data);
+        } else {
+          // 预测失败
+          this.handlePredictionError({
+            status: 'error',
+            message: result.error || '预测失败，请稍后重试'
+          });
+        }
+      } catch (error) {
+        console.error('预测过程中出错:', error);
+        this.handlePredictionError({
+          status: 'error',
+          message: error.message || '预测失败，请检查网络连接或稍后重试'
+        });
+      }
+    },
+    
     // 加载统计信息
     async loadStatistics() {
       try {

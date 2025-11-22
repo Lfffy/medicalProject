@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>前端页面测试</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+<body>
+    <h1>前端页面测试</h1>
+    <div id="results"></div>
+    
+    <script>
+        // 测试前端API调用
+        $.ajax({
+            type: "GET",
+            url: "http://localhost:8081/getHomeData",
+            dataType: "json",
+            success: function(res) {
+                $("#results").append("<p>API调用成功，状态码: " + res.code + "</p>");
+                $("#results").append("<p>病例数据数量: " + (res.data.casesData ? res.data.casesData.length : 0) + "</p>");
+                $("#results").append("<p>中心数据数量: " + (res.data.circleData ? res.data.circleData.length : 0) + "</p>");
+                
+                // 模拟前端处理逻辑
+                const mockCases = [
+                    { id: "001", name: "张女士", age: 28, gestational_week: 24, risk_level: "低风险" },
+                    { id: "002", name: "李女士", age: 32, gestational_week: 18, risk_level: "中风险" },
+                    { id: "003", name: "王女士", age: 25, gestational_week: 30, risk_level: "低风险" },
+                    { id: "004", name: "陈女士", age: 35, gestational_week: 12, risk_level: "高风险" },
+                    { id: "005", name: "刘女士", age: 29, gestational_week: 26, risk_level: "低风险" },
+                ];
+                
+                const mockCenterData = [
+                    { name: "低风险", value: 65 },
+                    { name: "中风险", value: 25 },
+                    { name: "高风险", value: 10 }
+                ];
+                
+                // 初始化使用模拟数据
+                let casesData = mockCases;
+                let centerData = mockCenterData;
+                
+                // 只有当API返回有效数据时才使用API数据
+                if (res.data.casesData && res.data.casesData.length > 0) {
+                    casesData = res.data.casesData;
+                }
+                if (res.data.circleData && res.data.circleData.length > 0) {
+                    centerData = res.data.circleData;
+                }
+                
+                $("#results").append("<h2>最终使用的数据:</h2>");
+                $("#results").append("<p>病例数据数量: " + casesData.length + "</p>");
+                $("#results").append("<p>中心数据数量: " + centerData.length + "</p>");
+                
+                $("#results").append("<h3>病例数据:</h3>");
+                casesData.forEach(function(caseItem) {
+                    $("#results").append("<p>" + caseItem.name + ", 年龄: " + caseItem.age + ", 孕周: " + caseItem.gestational_week + ", 风险等级: " + caseItem.risk_level + "</p>");
+                });
+                
+                $("#results").append("<h3>中心数据:</h3>");
+                centerData.forEach(function(item) {
+                    $("#results").append("<p>" + item.name + ": " + item.value + "</p>");
+                });
+            },
+            error: function(err) {
+                $("#results").append("<p>API调用失败: " + err.statusText + "</p>");
+            }
+        });
+    </script>
+</body>
+</html>

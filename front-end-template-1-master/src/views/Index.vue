@@ -817,23 +817,36 @@ export default {
         { id: "005", name: "刘女士", age: 29, gestational_week: 26, risk_level: "低风险" },
       ];
       
+      const mockCenterData = [
+        { name: "低风险", value: 65 },
+        { name: "中风险", value: 25 },
+        { name: "高风险", value: 10 }
+      ];
+      
+      // 初始化使用模拟数据
       this.casesData = mockCases;
+      this.centerData = mockCenterData;
       
       // 实际项目中应该从API获取数据
       $.ajax({
         type: "GET",
-        url: "/api/getHomeData",
+        url: "http://localhost:8081/getHomeData",
         dataType: "json",
         success: (res) => {
           if (res.code === 200) {
-            this.casesData = res.data.casesData || [];
-            this.centerData = res.data.center || this.centerData;
+            // 只有当API返回有效数据时才使用API数据
+            if (res.data.casesData && res.data.casesData.length > 0) {
+              this.casesData = res.data.casesData;
+            }
+            if (res.data.circleData && res.data.circleData.length > 0) {
+              this.centerData = res.data.circleData;
+            }
             // 更新图表配置
           }
         },
         error: (err) => {
           console.error("获取数据失败:", err);
-          // 使用模拟数据
+          // 使用模拟数据（已在初始化时设置）
         },
       });
     },

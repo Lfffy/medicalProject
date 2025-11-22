@@ -816,4 +816,4 @@ def tableData():
 if __name__ == '__main__':
     print("医疗数据分析系统启动中...")
     print("请访问: http://localhost:8081")
-    socketio.run(app, debug=True, host='0.0.0.0', port=8081, allow_unsafe_werkzeug=True)
+    app.run(debug=True, host='0.0.0.0', port=8081)

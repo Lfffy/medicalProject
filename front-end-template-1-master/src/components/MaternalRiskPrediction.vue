@@ -390,7 +390,7 @@ export default {
       maternalPredictionService.getModelStatus()
         .then(response => {
           if (response.success) {
-            this.modelsLoaded = response.data.all_models_loaded;
+            this.modelsLoaded = response.data.models_loaded;
           }
         })
         .catch(error => {
@@ -413,13 +413,19 @@ export default {
               if (response.success) {
                 this.predictionResults = response.data;
                 this.$message.success('风险预测完成');
+                // 触发预测成功事件
+                this.$emit('predictionSuccess', response.data);
               } else {
                 this.$message.error(response.error || '预测失败');
+                // 触发预测失败事件
+                this.$emit('predictionError', { message: response.error || '预测失败' });
               }
             })
             .catch(error => {
               console.error('预测失败:', error);
               this.$message.error('预测失败，请稍后重试');
+              // 触发预测失败事件
+              this.$emit('predictionError', { message: '预测失败，请稍后重试' });
             })
             .finally(() => {
               this.predicting = false;

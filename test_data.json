@@ -1,0 +1,13 @@
+{
+    "age": 32,
+    "height": 165,
+    "weight": 70,
+    "gestational_weeks": 28,
+    "parity": 1,
+    "pregnancy_count": 2,
+    "systolic_pressure": 135,
+    "diastolic_pressure": 85,
+    "blood_sugar": 6.5,
+    "pregnancy_type": "单胎",
+    "risk_factors": "高龄,肥胖"
+}

@@ -657,12 +657,15 @@ class MaternalRiskPredictor:
                 top_features = []
             
             # 创建结果
+            # 确保概率值是数字类型
+            prob_value = float(probabilities[1]) if len(probabilities) > 1 else float(probabilities[0])
+            
             result = {
                 'risk_type': '子痫前期',
                 'risk_level': '高风险' if prediction == 1 else '低风险',
-                'risk_probability': float(probabilities[1]) if len(probabilities) > 1 else float(probabilities[0]),
+                'risk_probability': prob_value,
                 'top_risk_factors': top_features,
-                'recommendations': self.get_preeclampsia_recommendations(prediction, probabilities[1] if len(probabilities) > 1 else probabilities[0])
+                'recommendations': self.get_preeclampsia_recommendations(int(prediction), prob_value)
             }
             
             return result
@@ -724,12 +727,15 @@ class MaternalRiskPredictor:
                 top_features = []
             
             # 创建结果
+            # 确保概率值是数字类型
+            prob_value = float(probabilities[1]) if len(probabilities) > 1 else float(probabilities[0])
+            
             result = {
                 'risk_type': '妊娠期糖尿病',
                 'risk_level': '高风险' if prediction == 1 else '低风险',
-                'risk_probability': float(probabilities[1]) if len(probabilities) > 1 else float(probabilities[0]),
+                'risk_probability': prob_value,
                 'top_risk_factors': top_features,
-                'recommendations': self.get_gestational_diabetes_recommendations(prediction, probabilities[1] if len(probabilities) > 1 else probabilities[0])
+                'recommendations': self.get_gestational_diabetes_recommendations(int(prediction), prob_value)
             }
             
             return result
@@ -791,12 +797,15 @@ class MaternalRiskPredictor:
                 top_features = []
             
             # 创建结果
+            # 确保概率值是数字类型
+            prob_value = float(probabilities[1]) if len(probabilities) > 1 else float(probabilities[0])
+            
             result = {
                 'risk_type': '早产',
                 'risk_level': '高风险' if prediction == 1 else '低风险',
-                'risk_probability': float(probabilities[1]) if len(probabilities) > 1 else float(probabilities[0]),
+                'risk_probability': prob_value,
                 'top_risk_factors': top_features,
-                'recommendations': self.get_preterm_birth_recommendations(prediction, probabilities[1] if len(probabilities) > 1 else probabilities[0])
+                'recommendations': self.get_preterm_birth_recommendations(int(prediction), prob_value)
             }
             
             return result
@@ -861,16 +870,35 @@ class MaternalRiskPredictor:
             # 按重要性排序
             sorted_factors = sorted(unique_factors.values(), key=lambda x: x['importance'], reverse=True)[:5]
             
-            # 创建综合结果
+            # 创建综合结果 - 修改为前端期望的结构
             result = {
-                'overall_risk_level': risk_level,
-                'overall_risk_score': float(overall_risk),
-                'individual_risks': {
-                    'preeclampsia': preeclampsia_result,
-                    'gestational_diabetes': gestational_diabetes_result,
-                    'preterm_birth': preterm_birth_result
+                'comprehensive': {
+                    'overall_risk_level': risk_level,
+                    'overall_risk_score': float(overall_risk),
+                    'risk_description': f'根据您的健康数据分析，您的综合风险等级为{risk_level}。',
+                    'recommendations': self.get_comprehensive_recommendations(risk_level, overall_risk)
+                },
+                'preeclampsia': {
+                    'risk_level': self._get_risk_level(preeclampsia_result['risk_probability'] if preeclampsia_result else 0),
+                    'risk_score': int((preeclampsia_result['risk_probability'] if preeclampsia_result else 0) * 100),
+                    'description': f'子痫前期风险等级为{self._get_risk_level(preeclampsia_result["risk_probability"] if preeclampsia_result else 0)}。',
+                    'key_factors': [factor['name'] for factor in (preeclampsia_result['top_risk_factors'] if preeclampsia_result else [])[:3]]
+                },
+                'gestational_diabetes': {
+                    'risk_level': self._get_risk_level(gestational_diabetes_result['risk_probability'] if gestational_diabetes_result else 0),
+                    'risk_score': int((gestational_diabetes_result['risk_probability'] if gestational_diabetes_result else 0) * 100),
+                    'description': f'妊娠期糖尿病风险等级为{self._get_risk_level(gestational_diabetes_result["risk_probability"] if gestational_diabetes_result else 0)}。',
+                    'key_factors': [factor['name'] for factor in (gestational_diabetes_result['top_risk_factors'] if gestational_diabetes_result else [])[:3]]
+                },
+                'preterm_birth': {
+                    'risk_level': self._get_risk_level(preterm_birth_result['risk_probability'] if preterm_birth_result else 0),
+                    'risk_score': int((preterm_birth_result['risk_probability'] if preterm_birth_result else 0) * 100),
+                    'description': f'早产风险等级为{self._get_risk_level(preterm_birth_result["risk_probability"] if preterm_birth_result else 0)}。',
+                    'key_factors': [factor['name'] for factor in (preterm_birth_result['top_risk_factors'] if preterm_birth_result else [])[:3]]
                 },
                 'top_risk_factors': sorted_factors,
+                'overall_risk_level': risk_level,
+                'overall_risk_score': float(overall_risk),
                 'recommendations': self.get_comprehensive_recommendations(risk_level, overall_risk)
             }
             
@@ -968,6 +996,23 @@ class MaternalRiskPredictor:
                 "注意腹痛、阴道流血等早产征兆",
                 "健康饮食，戒烟戒酒"
             ]
+    
+    def _get_risk_level(self, probability: float) -> str:
+        """
+        根据概率值返回风险等级
+        
+        Args:
+            probability: 风险概率值 (0-1)
+            
+        Returns:
+            风险等级字符串 (低风险/中风险/高风险)
+        """
+        if probability >= 0.7:
+            return '高风险'
+        elif probability >= 0.4:
+            return '中风险'
+        else:
+            return '低风险'
     
     def get_comprehensive_recommendations(self, risk_level: str, risk_score: float) -> List[str]:
         """

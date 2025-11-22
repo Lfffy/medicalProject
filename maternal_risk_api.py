@@ -14,7 +14,7 @@ from datetime import datetime
 from maternal_risk_predictor import MaternalRiskPredictor
 
 # 创建蓝图
-maternal_risk_bp = Blueprint('maternal_risk_bp', __name__, url_prefix='/api/maternal-risk')
+maternal_risk_bp = Blueprint('maternal_risk_bp', __name__, url_prefix='/api/maternal_risk')
 
 # 初始化预测器
 predictor = MaternalRiskPredictor()
@@ -32,6 +32,9 @@ def load_models():
     except Exception as e:
         print(f"孕产妇风险预测模型加载失败: {e}")
         return False
+
+# 在模块导入时自动加载模型
+load_models()
 
 # 健康检查端点
 @maternal_risk_bp.route('/health', methods=['GET'])
