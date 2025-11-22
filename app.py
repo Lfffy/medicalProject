@@ -812,15 +812,8 @@ def tableData():
 
 
 
-# 添加机器学习预测页面路由
-@app.route('/ml_prediction')
-def ml_prediction():
-    """机器学习预测页面"""
-    return send_from_directory('.', 'ml_prediction.html')
-
 # 启动应用
 if __name__ == '__main__':
     print("医疗数据分析系统启动中...")
     print("请访问: http://localhost:8081")
-    print("机器学习预测页面: http://localhost:8081/ml_prediction")
     socketio.run(app, debug=True, host='0.0.0.0', port=8081, allow_unsafe_werkzeug=True)

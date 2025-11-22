@@ -8,7 +8,6 @@ import DataCenter from '../views/DataCenter.vue'
 import AnalysisCenter from '../views/AnalysisCenter.vue'
 import MonitoringCenter from '../views/MonitoringCenter.vue'
 import DashboardCenter from '../views/DashboardCenter.vue'
-import MLPredictionCenter from '../views/MLPredictionCenter.vue'
 
 import MaternalHealthPrediction from '../views/MaternalHealthPrediction.vue'
 
@@ -65,12 +64,6 @@ const routes = [
         name: 'DashboardCenter',
         component: DashboardCenter,
         meta: { name: '可视化大屏' }
-    },
-    {
-        path: '/prediction-model',
-        name: 'MLPredictionCenter',
-        component: MLPredictionCenter,
-        meta: { name: '机器学习预测' }
     },
     {
         path: '/maternal-health-prediction',
