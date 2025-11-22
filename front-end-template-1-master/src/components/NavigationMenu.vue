@@ -23,6 +23,10 @@
           <i class="fas fa-brain"></i>
           <span>机器学习预测中心</span>
         </router-link>
+        <router-link to="/maternal-health-prediction" class="menu-item">
+          <i class="fas fa-baby"></i>
+          <span>孕产妇健康预测</span>
+        </router-link>
       </div>
     </div>
     

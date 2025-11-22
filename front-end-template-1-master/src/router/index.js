@@ -10,6 +10,8 @@ import MonitoringCenter from '../views/MonitoringCenter.vue'
 import DashboardCenter from '../views/DashboardCenter.vue'
 import MLPredictionCenter from '../views/MLPredictionCenter.vue'
 
+import MaternalHealthPrediction from '../views/MaternalHealthPrediction.vue'
+
 // 保留原有组件作为备用
 import Pred from '../views/Pred.vue'
 import TableData from '../views/TableData.vue'
@@ -69,6 +71,12 @@ const routes = [
         name: 'MLPredictionCenter',
         component: MLPredictionCenter,
         meta: { name: '机器学习预测' }
+    },
+    {
+        path: '/maternal-health-prediction',
+        name: 'MaternalHealthPrediction',
+        component: MaternalHealthPrediction,
+        meta: { name: '孕产妇健康预测' }
     },
     
     // 保留原有路由作为备用和兼容性支持

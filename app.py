@@ -43,6 +43,9 @@ from monitoring_api import monitoring_bp
 # 导入机器学习API蓝图 - 暂时注释掉
 # from ml_api import ml_bp
 
+# 导入孕产妇风险预测API蓝图
+from maternal_risk_api import maternal_risk_bp
+
 # 注册数据管理API蓝图
 app.register_blueprint(data_bp)
 
@@ -69,6 +72,9 @@ app.register_blueprint(monitoring_bp)
 
 # 注册机器学习API蓝图 - 暂时注释掉
 # app.register_blueprint(ml_bp)
+
+# 注册孕产妇风险预测API蓝图
+app.register_blueprint(maternal_risk_bp)
 
 # 初始化AI聊天服务
 from ai_chat_service import init_ai_chat_service
