@@ -1,4 +1,4 @@
-from flask import Flask,request,jsonify,render_template,send_from_directory
+from flask import Flask,request,jsonify,render_template,send_from_directory,redirect
 from flask_cors import CORS
 from flask_socketio import SocketIO
 from utils.getAllData import *
@@ -40,7 +40,7 @@ from hospital_api import hospital_bp
 # 导入监控API蓝图
 from monitoring_api import monitoring_bp
 
-# 导入机器学习API蓝图 - 暂时注释掉
+# 导入机器学习API蓝图（已注释，因为模块不存在）
 # from ml_api import ml_bp
 
 # 导入孕产妇风险预测API蓝图
@@ -53,7 +53,7 @@ app.register_blueprint(data_bp)
 app.register_blueprint(analysis_bp)
 
 # 注册孕产妇专项功能API蓝图
-app.register_blueprint(maternal_bp)
+app.register_blueprint(maternal_risk_bp, name='unique_maternal_risk_bp')
 
 # 注册用户管理API蓝图
 app.register_blueprint(user_bp)
@@ -70,7 +70,7 @@ app.register_blueprint(hospital_bp)
 # 注册监控API蓝图
 app.register_blueprint(monitoring_bp)
 
-# 注册机器学习API蓝图 - 暂时注释掉
+# 注册机器学习API蓝图（已注释，因为模块不存在）
 # app.register_blueprint(ml_bp)
 
 # 注册孕产妇风险预测API蓝图
@@ -80,9 +80,13 @@ app.register_blueprint(maternal_risk_bp)
 from ai_chat_service import init_ai_chat_service
 ai_chat_service = init_ai_chat_service(socketio)
 
-# 初始化机器学习预测器 - 暂时注释掉
-# from ml_api import init_ml_predictor
-# init_ml_predictor()
+# 初始化机器学习预测器（从maternal_risk_api导入现有实例）
+from maternal_risk_api import predictor
+# 验证预测器状态
+if predictor is None:
+    print("预测器未正确初始化")
+else:
+    print("预测器初始化成功")
 
 # SQLite数据库配置
 import sqlite3
@@ -247,13 +251,11 @@ except Exception as e:
 #     print(f"模型训练失败: {e}")
 #     model = None
 
-# 检查是否是孕产妇数据的辅助函数
-def is_maternal_data(data_list):
-    """检查数据是否为孕产妇数据"""
-    return data_list and isinstance(data_list, list) and len(data_list) > 0 and 'pregnancy_status' in data_list[0]
+
 @app.route('/')
-def hello_world():  # put application's code here
-    return 'Hello World!'
+def index():
+    """系统主页面 - 重定向到医院管理页面"""
+    return redirect('/hospital_management')
 
 @app.route('/getHomeData',methods=['GET','POST'])
 def getHomeData():
@@ -444,6 +446,63 @@ def getMaternalHealthData():
     """专门获取孕产妇健康数据的接口"""
     try:
         maternalData = getMaternalCasesData()
+        
+        # 导入风险预测器
+        from maternal_risk_predictor import MaternalRiskPredictor
+        predictor = MaternalRiskPredictor()
+        
+        # 为每个孕产妇记录生成风险评估
+        for case in maternalData:
+            try:
+                # 准备预测所需的数据，使用maternal_info表中的实际字段名
+                patient_data = {
+                    'age': case.get('age', 25),  # 从表中直接获取年龄
+                    'systolic_pressure': case.get('systolic_pressure', 120),  # 获取收缩压
+                    'diastolic_pressure': case.get('diastolic_pressure', 80),  # 获取舒张压
+                    'current_gestational_week': case.get('gestational_weeks', 0),  # 使用正确的字段名
+                    'parity': case.get('parity', 0),
+                    'gravidity': case.get('pregnancy_count', 0),  # 使用正确的字段名
+                    'previous_cesarean': '剖宫产' in case.get('notes', '') or '剖腹产' in case.get('notes', ''),  # 从notes中推断
+                    'pregnancy_complications': case.get('notes', '')  # 使用notes字段存储并发症信息
+                }
+                
+                # 执行综合风险评估
+                risk_result = predictor.predict_comprehensive_risk(patient_data)
+                
+                # 更新记录的风险信息
+                if risk_result:
+                    # 正确提取各风险类型的风险分数和信息
+                    case['risk_prediction'] = {
+                        'gestational_diabetes_risk': risk_result.get('gestational_diabetes', {}).get('risk_score', 0) / 100,  # 转换为小数
+                        'preeclampsia_risk': risk_result.get('preeclampsia', {}).get('risk_score', 0) / 100,
+                        'preterm_birth_risk': risk_result.get('preterm_birth', {}).get('risk_score', 0) / 100,
+                        'overall_risk_level': risk_result.get('overall_risk_level', '低风险'),
+                        'risk_factors': [factor.get('name', '') for factor in risk_result.get('top_risk_factors', [])],
+                        'recommendations': risk_result.get('recommendations', [])
+                    }
+                    # 更新risk_level字段以保持向后兼容
+                    case['risk_level'] = risk_result.get('overall_risk_level', '低风险')
+                else:
+                    # 如果预测失败，使用基于规则的简单风险评估
+                    case['risk_prediction'] = {
+                        'gestational_diabetes_risk': 0.05,
+                        'preeclampsia_risk': 0.05,
+                        'preterm_birth_risk': 0.05,
+                        'overall_risk_level': '低风险',
+                        'risk_factors': [],
+                        'recommendations': []
+                    }
+            except Exception as e:
+                print(f"对孕产妇 {case.get('name', 'Unknown')} 进行风险评估时出错: {e}")
+                # 出错时设置默认值
+                case['risk_prediction'] = {
+                    'gestational_diabetes_risk': 0.05,
+                    'preeclampsia_risk': 0.05,
+                    'preterm_birth_risk': 0.05,
+                    'overall_risk_level': '低风险',
+                    'risk_factors': [],
+                    'recommendations': []
+                }
         
         # 统计分析
         total_cases = len(maternalData)

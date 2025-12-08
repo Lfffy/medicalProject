@@ -7,12 +7,9 @@ import random
 
 monitoring_bp = Blueprint('monitoring', __name__, url_prefix='/api/monitoring')
 
-# 数据库文件路径
-DB_PATH = os.path.join(os.path.dirname(__file__), 'medical_system.db')
-
 def get_db_connection():
     """获取数据库连接"""
-    conn = sqlite3.connect(DB_PATH)
+    conn = sqlite3.connect('medical_system.db')
     conn.row_factory = sqlite3.Row
     return conn
 

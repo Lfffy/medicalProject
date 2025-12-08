@@ -370,7 +370,7 @@ class AlertManager:
             "sms": {
                 "enabled": False,
                 "api_url": "https://api.sms-service.com/send",
-                "api_key": "",
+                "api_key": "9511e57c-7838-415d-8225-fd89678c6311",
                 "phone_numbers": []
             }
         }
