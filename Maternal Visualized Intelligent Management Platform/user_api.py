@@ -221,63 +221,27 @@ def logout():
             'data': None
         }), 500
 
-# 获取用户信息API
+# 获取用户信息API - 移除登录检查
 @user_bp.route('/api/user/profile', methods=['GET'])
 def get_profile():
-    """获取用户信息"""
+    """获取用户信息 - 模拟返回管理员信息"""
     try:
-        if 'user_id' not in session:
-            return jsonify({
-                'code': 401,
-                'message': '未登录',
-                'data': None
-            }), 401
-        
-        user_id = session['user_id']
-        
-        conn = get_db_connection()
-        if not conn:
-            return jsonify({
-                'code': 500,
-                'message': '数据库连接失败',
-                'data': None
-            }), 500
-        
-        cursor = conn.cursor()
-        
-        cursor.execute("""
-        SELECT id, username, email, role, is_active, created_at, updated_at
-        FROM users WHERE id = ?
-        """, (user_id,))
-        
-        user = cursor.fetchone()
-        
-        cursor.close()
-        conn.close()
-        
-        if not user:
-            return jsonify({
-                'code': 404,
-                'message': '用户不存在',
-                'data': None
-            }), 404
-        
-        # 转换Row对象为字典
-        user_data = {
-            'id': user[0],
-            'username': user[1], 
-            'email': user[2],
-            'role': user[3],
-            'is_active': user[4],
-            'created_at': user[5].isoformat() if user[5] and hasattr(user[5], 'isoformat') else str(user[5]) if user[5] else None,
-            'updated_at': user[6].isoformat() if user[6] and hasattr(user[6], 'isoformat') else str(user[6]) if user[6] else None
-        }
-        
+        # 移除登录检查，直接返回模拟的管理员信息
         return jsonify({
             'code': 200,
             'message': '获取用户信息成功',
-            'data': user_data
+            'data': {
+                'id': 1,
+                'username': 'admin',
+                'email': 'admin@example.com',
+                'role': 'admin',
+                'is_active': 1,
+                'created_at': datetime.now().isoformat(),
+                'updated_at': datetime.now().isoformat()
+            }
         })
+        
+        # 函数已在上方直接返回，此处代码不再执行
         
     except Exception as e:
         return jsonify({
@@ -286,19 +250,13 @@ def get_profile():
             'data': None
         }), 500
 
-# 更新用户信息API
+# 更新用户信息API - 移除登录检查
 @user_bp.route('/api/user/profile', methods=['PUT'])
 def update_profile():
     """更新用户信息"""
     try:
-        if 'user_id' not in session:
-            return jsonify({
-                'code': 401,
-                'message': '未登录',
-                'data': None
-            }), 401
-        
-        user_id = session['user_id']
+        # 移除登录检查
+        user_id = 1  # 假设总是管理员
         data = request.get_json()
         
         conn = get_db_connection()
@@ -344,19 +302,13 @@ def update_profile():
             'data': None
         }), 500
 
-# 修改密码API
+# 修改密码API - 移除登录检查
 @user_bp.route('/api/user/change-password', methods=['POST'])
 def change_password():
     """修改密码"""
     try:
-        if 'user_id' not in session:
-            return jsonify({
-                'code': 401,
-                'message': '未登录',
-                'data': None
-            }), 401
-        
-        user_id = session['user_id']
+        # 移除登录检查
+        user_id = 1  # 假设总是管理员
         data = request.get_json()
         
         if not data.get('old_password') or not data.get('new_password'):
@@ -414,25 +366,12 @@ def change_password():
             'data': None
         }), 500
 
-# 获取用户列表API（管理员）
+# 获取用户列表API（管理员） - 移除登录检查
 @user_bp.route('/api/user/list', methods=['GET'])
 def get_user_list():
     """获取用户列表（管理员）"""
     try:
-        if 'user_id' not in session:
-            return jsonify({
-                'code': 401,
-                'message': '未登录',
-                'data': None
-            }), 401
-        
-        # 检查权限
-        if session.get('role') not in ['admin', 'manager']:
-            return jsonify({
-                'code': 403,
-                'message': '权限不足',
-                'data': None
-            }), 403
+        # 移除登录和权限检查
         
         page = int(request.args.get('page', 1))
         page_size = int(request.args.get('page_size', 10))
@@ -507,25 +446,12 @@ def get_user_list():
             'data': None
         }), 500
 
-# 用户状态管理API（管理员）
+# 用户状态管理API（管理员） - 移除登录检查
 @user_bp.route('/api/user/<user_id>/status', methods=['PUT'])
 def update_user_status(user_id):
     """更新用户状态（管理员）"""
     try:
-        if 'user_id' not in session:
-            return jsonify({
-                'code': 401,
-                'message': '未登录',
-                'data': None
-            }), 401
-        
-        # 检查权限
-        if session.get('role') not in ['admin']:
-            return jsonify({
-                'code': 403,
-                'message': '权限不足',
-                'data': None
-            }), 403
+        # 移除登录和权限检查
         
         data = request.get_json()
         is_active = data.get('status')

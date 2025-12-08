@@ -1,0 +1,20 @@
+{
+  "preeclampsia": {
+    "active_version": "v1.0",
+    "versions": [
+      "v1.0"
+    ]
+  },
+  "gestational_diabetes": {
+    "active_version": "v1.0",
+    "versions": [
+      "v1.0"
+    ]
+  },
+  "preterm_birth": {
+    "active_version": "v1.0",
+    "versions": [
+      "v1.0"
+    ]
+  }
+}

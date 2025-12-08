@@ -1,0 +1,221 @@
+{
+  "timestamp": "2025-12-06T15:37:31.890672",
+  "model_availability": {
+    "preeclampsia": true,
+    "gestational_diabetes": true,
+    "preterm_birth": true
+  },
+  "prediction_results": {
+    "preeclampsia": [
+      {
+        "input": {
+          "age": 32,
+          "gestational_weeks": 28,
+          "systolic_pressure": 145,
+          "diastolic_pressure": 92,
+          "bmi": 31.5,
+          "family_history_hypertension": 1,
+          "previous_preeclampsia": 0,
+          "multiple_pregnancy": 0
+        },
+        "output": {
+          "risk_type": "preeclampsia",
+          "risk_level": "低风险",
+          "risk_probability": 0.2,
+          "top_risk_factors": [],
+          "recommendations": [
+            "请咨询医生获取专业建议",
+            "定期进行产检",
+            "注意监测血压变化"
+          ],
+          "model_type": "rule_based"
+        },
+        "using_ml": false
+      },
+      {
+        "input": {
+          "age": 26,
+          "gestational_weeks": 22,
+          "systolic_pressure": 120,
+          "diastolic_pressure": 75,
+          "bmi": 24.0,
+          "family_history_hypertension": 0,
+          "previous_preeclampsia": 0,
+          "multiple_pregnancy": 0
+        },
+        "output": {
+          "risk_type": "preeclampsia",
+          "risk_level": "低风险",
+          "risk_probability": 0.2,
+          "top_risk_factors": [],
+          "recommendations": [
+            "请咨询医生获取专业建议",
+            "定期进行产检",
+            "注意监测血压变化"
+          ],
+          "model_type": "rule_based"
+        },
+        "using_ml": false
+      }
+    ],
+    "gestational_diabetes": [
+      {
+        "input": {
+          "age": 35,
+          "gestational_weeks": 24,
+          "blood_sugar": 6.8,
+          "bmi": 32.0,
+          "family_history_diabetes": 1,
+          "previous_gdm": 1,
+          "polyhydramnios": 0
+        },
+        "output": {
+          "risk_type": "gestational_diabetes",
+          "risk_level": "中风险",
+          "risk_probability": 0.45,
+          "top_risk_factors": [
+            {
+              "name": "体重指数过高",
+              "importance": 0.7
+            }
+          ],
+          "recommendations": [
+            "保持健康饮食",
+            "适当运动",
+            "定期监测血糖"
+          ],
+          "model_type": "rule_based"
+        },
+        "using_ml": false
+      },
+      {
+        "input": {
+          "age": 28,
+          "gestational_weeks": 26,
+          "blood_sugar": 5.2,
+          "bmi": 23.5,
+          "family_history_diabetes": 0,
+          "previous_gdm": 0,
+          "polyhydramnios": 0
+        },
+        "output": {
+          "risk_type": "gestational_diabetes",
+          "risk_level": "低风险",
+          "risk_probability": 0.15,
+          "top_risk_factors": [],
+          "recommendations": [
+            "保持健康饮食",
+            "适当运动",
+            "定期监测血糖"
+          ],
+          "model_type": "rule_based"
+        },
+        "using_ml": false
+      }
+    ],
+    "preterm_birth": [
+      {
+        "input": {
+          "age": 20,
+          "gestational_weeks": 26,
+          "previous_preterm": 1,
+          "cervical_length": 20,
+          "uterine_irritability": 1,
+          "smoking": 1,
+          "infection_risk": 1
+        },
+        "output": {
+          "risk_type": "preterm_birth",
+          "risk_level": "中风险",
+          "risk_probability": 0.4,
+          "top_risk_factors": [
+            {
+              "name": "既往早产史",
+              "importance": 0.7
+            }
+          ],
+          "recommendations": [
+            "避免剧烈活动",
+            "保持充分休息",
+            "定期产检监测宫颈长度"
+          ],
+          "model_type": "rule_based"
+        },
+        "using_ml": false
+      },
+      {
+        "input": {
+          "age": 30,
+          "gestational_weeks": 32,
+          "previous_preterm": 0,
+          "cervical_length": 35,
+          "uterine_irritability": 0,
+          "smoking": 0,
+          "infection_risk": 0
+        },
+        "output": {
+          "risk_type": "preterm_birth",
+          "risk_level": "低风险",
+          "risk_probability": 0.1,
+          "top_risk_factors": [],
+          "recommendations": [
+            "避免剧烈活动",
+            "保持充分休息",
+            "定期产检监测宫颈长度"
+          ],
+          "model_type": "rule_based"
+        },
+        "using_ml": false
+      }
+    ]
+  },
+  "compatibility_results": {
+    "preeclampsia": [
+      {
+        "is_valid": true,
+        "missing_fields": [],
+        "type_errors": [],
+        "using_ml": false
+      },
+      {
+        "is_valid": true,
+        "missing_fields": [],
+        "type_errors": [],
+        "using_ml": false
+      }
+    ],
+    "gestational_diabetes": [
+      {
+        "is_valid": true,
+        "missing_fields": [],
+        "type_errors": [],
+        "using_ml": false
+      },
+      {
+        "is_valid": true,
+        "missing_fields": [],
+        "type_errors": [],
+        "using_ml": false
+      }
+    ],
+    "preterm_birth": [
+      {
+        "is_valid": true,
+        "missing_fields": [],
+        "type_errors": [],
+        "using_ml": false
+      },
+      {
+        "is_valid": true,
+        "missing_fields": [],
+        "type_errors": [],
+        "using_ml": false
+      }
+    ]
+  },
+  "summary": {
+    "total_models": 3,
+    "available_models": 3,
+    "compatibility_score": 1.0
+  }
+}

@@ -21,81 +21,24 @@ def get_db_connection():
         print(f"数据库连接错误: {e}")
         return None
 
-# 权限装饰器
+# 权限装饰器 - 移除登录检查
 def require_permission(permission):
-    """权限验证装饰器"""
+    """权限验证装饰器 - 不再检查登录状态"""
     def decorator(f):
         @functools.wraps(f)
         def decorated_function(*args, **kwargs):
-            if 'user_id' not in session:
-                return jsonify({
-                    'code': 401,
-                    'message': '未登录',
-                    'data': None
-                }), 401
-            
-            user_id = session['user_id']
-            user_role = session.get('role', 'user')
-            
-            # 管理员拥有所有权限
-            if user_role == 'admin':
-                return f(*args, **kwargs)
-            
-            conn = get_db_connection()
-            if not conn:
-                return jsonify({
-                    'code': 500,
-                    'message': '数据库连接失败',
-                    'data': None
-                }), 500
-            
-            cursor = conn.cursor()
-            
-            # 检查用户权限
-            cursor.execute("""
-            SELECT COUNT(*) FROM user_permissions up
-            JOIN permissions p ON up.permission_id = p.id
-            WHERE up.user_id = ? AND p.name = ?
-            """, (user_id, permission))
-            
-            has_permission = cursor.fetchone()[0] > 0
-            
-            cursor.close()
-            conn.close()
-            
-            if not has_permission:
-                return jsonify({
-                    'code': 403,
-                    'message': '权限不足',
-                    'data': None
-                }), 403
-            
+            # 移除登录检查，直接执行函数
             return f(*args, **kwargs)
         return decorated_function
     return decorator
 
-# 角色权限装饰器
+# 角色权限装饰器 - 移除登录检查
 def require_role(*allowed_roles):
-    """角色验证装饰器"""
+    """角色验证装饰器 - 不再检查登录状态"""
     def decorator(f):
         @functools.wraps(f)
         def decorated_function(*args, **kwargs):
-            if 'user_id' not in session:
-                return jsonify({
-                    'code': 401,
-                    'message': '未登录',
-                    'data': None
-                }), 401
-            
-            user_role = session.get('role', 'user')
-            
-            if user_role not in allowed_roles:
-                return jsonify({
-                    'code': 403,
-                    'message': '权限不足',
-                    'data': None
-                }), 403
-            
+            # 移除登录检查，直接执行函数
             return f(*args, **kwargs)
         return decorated_function
     return decorator

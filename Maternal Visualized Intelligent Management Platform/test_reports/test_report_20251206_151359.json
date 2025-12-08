@@ -1,0 +1,106 @@
+{
+  "timestamp": "2025-12-06T15:13:59.343849",
+  "model_availability": {
+    "preeclampsia": true,
+    "gestational_diabetes": true,
+    "preterm_birth": true
+  },
+  "prediction_results": {
+    "preeclampsia": [
+      {
+        "input": {
+          "age": 32,
+          "gestational_weeks": 28,
+          "systolic_pressure": 145,
+          "diastolic_pressure": 92,
+          "bmi": 31.5,
+          "family_history_hypertension": 1,
+          "previous_preeclampsia": 0,
+          "multiple_pregnancy": 0
+        },
+        "error": "'MaternalRiskPredictor' object has no attribute 'last_used_ml'",
+        "using_ml": false
+      },
+      {
+        "input": {
+          "age": 26,
+          "gestational_weeks": 22,
+          "systolic_pressure": 120,
+          "diastolic_pressure": 75,
+          "bmi": 24.0,
+          "family_history_hypertension": 0,
+          "previous_preeclampsia": 0,
+          "multiple_pregnancy": 0
+        },
+        "error": "'MaternalRiskPredictor' object has no attribute 'last_used_ml'",
+        "using_ml": false
+      }
+    ],
+    "gestational_diabetes": [
+      {
+        "input": {
+          "age": 35,
+          "gestational_weeks": 24,
+          "blood_sugar": 6.8,
+          "bmi": 32.0,
+          "family_history_diabetes": 1,
+          "previous_gdm": 1,
+          "polyhydramnios": 0
+        },
+        "error": "'MaternalRiskPredictor' object has no attribute 'last_used_ml'",
+        "using_ml": false
+      },
+      {
+        "input": {
+          "age": 28,
+          "gestational_weeks": 26,
+          "blood_sugar": 5.2,
+          "bmi": 23.5,
+          "family_history_diabetes": 0,
+          "previous_gdm": 0,
+          "polyhydramnios": 0
+        },
+        "error": "'MaternalRiskPredictor' object has no attribute 'last_used_ml'",
+        "using_ml": false
+      }
+    ],
+    "preterm_birth": [
+      {
+        "input": {
+          "age": 20,
+          "gestational_weeks": 26,
+          "previous_preterm": 1,
+          "cervical_length": 20,
+          "uterine_irritability": 1,
+          "smoking": 1,
+          "infection_risk": 1
+        },
+        "error": "'MaternalRiskPredictor' object has no attribute 'last_used_ml'",
+        "using_ml": false
+      },
+      {
+        "input": {
+          "age": 30,
+          "gestational_weeks": 32,
+          "previous_preterm": 0,
+          "cervical_length": 35,
+          "uterine_irritability": 0,
+          "smoking": 0,
+          "infection_risk": 0
+        },
+        "error": "'MaternalRiskPredictor' object has no attribute 'last_used_ml'",
+        "using_ml": false
+      }
+    ]
+  },
+  "compatibility_results": {
+    "preeclampsia": [],
+    "gestational_diabetes": [],
+    "preterm_birth": []
+  },
+  "summary": {
+    "total_models": 3,
+    "available_models": 3,
+    "compatibility_score": 0.0
+  }
+}
