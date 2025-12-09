@@ -273,151 +273,177 @@ def getHomeData():
         conn = get_db_connection()
         cursor = conn.cursor()
         
-        # 获取总患者数
-        cursor.execute("SELECT COUNT(*) as count FROM medical_data")
-        total_patients = cursor.fetchone()['count']
+        # 检查表是否存在
+        cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='maternal_info'")
+        table_exists = cursor.fetchone()
         
-        # 获取今日新增患者数
+        if not table_exists:
+            # 如果表不存在，使用medical_data表作为备选
+            cursor.execute("SELECT COUNT(*) as count FROM medical_data")
+            total_patients = cursor.fetchone()['count']
+            
+            today = datetime.now().strftime('%Y-%m-%d')
+            cursor.execute("SELECT COUNT(*) as count FROM medical_data WHERE DATE(created_at) = ?", (today,))
+            new_patients = cursor.fetchone()['count']
+            
+            cursor.execute("SELECT MAX(age) as max_age, MIN(age) as min_age FROM medical_data WHERE age IS NOT NULL")
+            age_stats = cursor.fetchone()
+            max_age = age_stats['max_age'] if age_stats['max_age'] else 0
+            min_age = age_stats['min_age'] if age_stats['min_age'] else 0
+            
+            cursor.execute("""
+                SELECT name, age, 'N/A' as gestational_weeks, '未知' as risk_level, height, weight, 
+                       systolic_pressure || '/' || diastolic_pressure as blood_pressure
+                FROM medical_data 
+                ORDER BY created_at DESC 
+                LIMIT 10
+            """)
+            casesData = [dict(row) for row in cursor.fetchall()]
+            
+            return jsonify({
+                'message': 'success',
+                'code': 200,
+                'data': {
+                    'pieData': [],
+                    'configOne': [],
+                    'casesData': casesData,
+                    'maxNum': total_patients,
+                    'maxType': '暂无数据',
+                    'maxDep': '暂无数据',
+                    'maxHos': '暂无数据',
+                    'maxAge': max_age,
+                    'minAge': min_age,
+                    'boyList': [],
+                    'girlList': [],
+                    'ratioData': [],
+                    'circleData': [],
+                    'wordData': [],
+                    'lastData': {
+                        'xData': [],
+                        'y1Data': [],
+                        'y2Data': []
+                    },
+                    'isMaternalData': False
+                }
+            })
+        
+        # 使用maternal_info表获取数据
+        # 获取总孕产妇数
+        cursor.execute("SELECT COUNT(*) as count FROM maternal_info")
+        total_patients = cursor.fetchone()[0]
+        
+        # 获取今日新增孕产妇数
         today = datetime.now().strftime('%Y-%m-%d')
-        cursor.execute("SELECT COUNT(*) as count FROM medical_data WHERE DATE(created_at) = ?", (today,))
-        new_patients = cursor.fetchone()['count']
-        
-        # 获取最常见疾病
-        cursor.execute("""
-            SELECT diagnosis, COUNT(*) as count 
-            FROM medical_data 
-            WHERE diagnosis IS NOT NULL AND diagnosis != ''
-            GROUP BY diagnosis 
-            ORDER BY count DESC 
-            LIMIT 1
-        """)
-        most_common_disease = cursor.fetchone()
-        common_disease = most_common_disease['diagnosis'] if most_common_disease else '暂无数据'
-        
-        # 获取最繁忙科室
-        # 获取最繁忙科室（使用disease_type代替department）
-        cursor.execute("""
-            SELECT disease_type as department, COUNT(*) as count 
-            FROM medical_data 
-            WHERE disease_type IS NOT NULL AND disease_type != ''
-            GROUP BY disease_type 
-            ORDER BY count DESC 
-            LIMIT 1
-        """)
-        busiest_department = cursor.fetchone()
-        busy_department = busiest_department['department'] if busiest_department else '暂无数据'
+        cursor.execute("SELECT COUNT(*) as count FROM maternal_info WHERE DATE(created_at) = ?", (today,))
+        new_patients = cursor.fetchone()[0]
         
         # 获取年龄统计
-        cursor.execute("SELECT MAX(age) as max_age, MIN(age) as min_age FROM medical_data WHERE age IS NOT NULL")
+        cursor.execute("SELECT MAX(age) as max_age, MIN(age) as min_age FROM maternal_info WHERE age IS NOT NULL")
         age_stats = cursor.fetchone()
-        max_age = age_stats['max_age'] if age_stats['max_age'] else 0
-        min_age = age_stats['min_age'] if age_stats['min_age'] else 0
+        max_age = age_stats[0] if age_stats[0] else 0
+        min_age = age_stats[1] if age_stats[1] else 0
         
-        # 获取最常见医院（由于没有hospital字段，使用默认值）
-        common_hospital = '暂无数据'
-        
-        # 获取疾病类型分布（用于饼图）
+        # 获取风险等级分布
         cursor.execute("""
-            SELECT diagnosis as name, COUNT(*) as value 
-            FROM medical_data 
-            WHERE diagnosis IS NOT NULL AND diagnosis != ''
-            GROUP BY diagnosis 
-            ORDER BY value DESC 
-            LIMIT 10
+            SELECT risk_level as name, COUNT(*) as value 
+            FROM maternal_info 
+            WHERE risk_level IS NOT NULL AND risk_level != ''
+            GROUP BY risk_level
         """)
-        pieData = [dict(row) for row in cursor.fetchall()]
-        
-        # 获取性别分布
-        cursor.execute("""
-            SELECT gender as name, COUNT(*) as value 
-            FROM medical_data 
-            WHERE gender IS NOT NULL AND gender != ''
-            GROUP BY gender
-        """)
-        gender_distribution = [dict(row) for row in cursor.fetchall()]
-        boyList = [item for item in gender_distribution if item['name'] == '男']
-        girlList = [item for item in gender_distribution if item['name'] == '女']
-        ratioData = gender_distribution
+        risk_distribution = [dict(row) for row in cursor.fetchall()]
         
         # 获取年龄分布
         cursor.execute("""
             SELECT 
                 CASE 
-                    WHEN age < 18 THEN '0-17岁'
-                    WHEN age < 30 THEN '18-29岁'
-                    WHEN age < 40 THEN '30-39岁'
-                    WHEN age < 50 THEN '40-49岁'
-                    WHEN age < 60 THEN '50-59岁'
-                    ELSE '60岁以上'
+                    WHEN age < 20 THEN '20岁以下'
+                    WHEN age < 30 THEN '20-29岁'
+                    WHEN age < 35 THEN '30-34岁'
+                    WHEN age < 40 THEN '35-39岁'
+                    ELSE '40岁以上'
                 END as age_group,
                 COUNT(*) as value
-            FROM medical_data 
+            FROM maternal_info 
             WHERE age IS NOT NULL
             GROUP BY age_group
             ORDER BY age_group
         """)
         age_distribution = [dict(row) for row in cursor.fetchall()]
         
-        # 获取最新病例数据（用于表格显示）
+        # 获取最新孕产妇数据（用于表格显示）- 完整信息
         cursor.execute("""
-            SELECT name as patient_name, diagnosis, gender, age, height, weight, 
-                   systolic_pressure || '/' || diastolic_pressure as blood_pressure
-            FROM medical_data 
+            SELECT 
+                id, 
+                name, 
+                age, 
+                gestational_weeks, 
+                risk_level,
+                pregnancy_type,
+                weight,
+                height,
+                systolic_pressure || '/' || diastolic_pressure as blood_pressure,
+                heart_rate,
+                blood_sugar,
+                last_menstrual_date,
+                due_date,
+                created_at
+            FROM maternal_info 
             ORDER BY created_at DESC 
             LIMIT 10
         """)
-        casesData = [dict(row) for row in cursor.fetchall()]
+        columns = [desc[0] for desc in cursor.description]
+        casesData = []
+        for row in cursor.fetchall():
+            casesData.append(dict(zip(columns, row)))
         
-        # 获取科室统计（用于circleData，使用disease_type代替department）
-        cursor.execute("""
-            SELECT disease_type as name, COUNT(*) as value 
-            FROM medical_data 
-            WHERE disease_type IS NOT NULL AND disease_type != ''
-            GROUP BY disease_type 
-            ORDER BY value DESC
-        """)
-        circleData = [dict(row) for row in cursor.fetchall()]
-        
-        # 获取体重和血压数据
+        # 获取体重和血压数据用于图表
         cursor.execute("""
             SELECT name as xData, weight as y1Data, 
-                   systolic_pressure || '/' || diastolic_pressure as y2Data
-            FROM medical_data 
+                   systolic_pressure as y2Data
+            FROM maternal_info 
             WHERE weight IS NOT NULL AND systolic_pressure IS NOT NULL 
             ORDER BY created_at DESC 
             LIMIT 10
         """)
         body_data = cursor.fetchall()
-        xData = [row['xData'] for row in body_data]
-        y1Data = [row['y1Data'] for row in body_data]
-        y2Data = [int(row['y2Data'].split('/')[0]) if '/' in str(row['y2Data']) else 0 for row in body_data]
+        columns = [desc[0] for desc in cursor.description]
+        body_data_list = []
+        for row in body_data:
+            body_data_list.append(dict(zip(columns, row)))
+        
+        xData = [row['xData'] for row in body_data_list]
+        y1Data = [row['y1Data'] for row in body_data_list]
+        y2Data = [row['y2Data'] for row in body_data_list]
         
         conn.close()
+        
+        # 获取最常见风险等级
+        most_common_risk = risk_distribution[0]['name'] if risk_distribution else '暂无数据'
         
         return jsonify({
             'message': 'success',
             'code': 200,
             'data': {
-                'pieData': pieData,
-                'configOne': circleData[:5],  # 取前5个科室作为配置数据
+                'pieData': risk_distribution,  # 使用风险等级分布作为饼图数据
+                'configOne': risk_distribution[:3],  # 取前3个风险等级
                 'casesData': casesData,
                 'maxNum': total_patients,
-                'maxType': common_disease,
-                'maxDep': busy_department,
-                'maxHos': common_hospital,
+                'maxType': most_common_risk,
+                'maxDep': '妇产科',
+                'maxHos': '暂无数据',
                 'maxAge': max_age,
                 'minAge': min_age,
-                'boyList': boyList,
-                'girlList': girlList,
-                'ratioData': ratioData,
-                'circleData': circleData,
-                'wordData': circleData,  # 使用科室数据作为词云数据
+                'boyList': [],  # 孕产妇系统不需要性别统计
+                'girlList': [],
+                'ratioData': risk_distribution,
+                'circleData': risk_distribution,
+                'wordData': risk_distribution,
                 'lastData': {
                     'xData': xData,
                     'y1Data': y1Data,
                     'y2Data': y2Data
                 },
-                'isMaternalData': False  # 默认不是孕产妇数据
+                'isMaternalData': True  # 标记为孕产妇数据
             }
         })
         
