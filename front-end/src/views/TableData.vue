@@ -45,7 +45,7 @@ export default {
             console.log('开始获取表格数据...');
             try {
                 this.loading = true;
-                const res = await this.$http.get('/tableData');
+                const res = await this.$http.get('/api/tableData');
                 console.log('TableData响应:', res);
                 
                 // 安全地访问响应数据

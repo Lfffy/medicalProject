@@ -168,7 +168,6 @@ export default {
       currentRecord: null,
       
       // 上传相关
-      uploadUrl: '',
       uploadHeaders: {
         'Authorization': 'Bearer ' + localStorage.getItem('token')
       },
@@ -280,10 +279,20 @@ export default {
     loadImportHistory() {
       this.$http.get('/api/data/import-history')
         .then(response => {
-          this.importHistory = response.data || [];
+          // 确保importHistory始终是数组类型
+          if (Array.isArray(response.data)) {
+            this.importHistory = response.data;
+          } else if (response.data) {
+            // 如果返回的是对象，尝试转换为数组或使用空数组
+            this.importHistory = [];
+          } else {
+            this.importHistory = [];
+          }
         })
         .catch(error => {
           this.$message.error('加载导入历史失败：' + error.message);
+          // 发生错误时也确保是数组
+          this.importHistory = [];
         });
     },
     
