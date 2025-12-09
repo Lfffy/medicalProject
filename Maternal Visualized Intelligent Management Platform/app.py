@@ -776,22 +776,24 @@ def hospital_management():
     """医院管理页面"""
     return render_template('hospital_management.html')
 
-@app.route('/tableData',methods=['GET','POST'])
+@app.route('/api/tableData',methods=['GET','POST'])
 def tableData():
     try:
         print("开始处理tableData请求...")
         
-        # 直接查询cases表获取数据
+        # 导入必要的模块
         from utils.query import querys
+        
+        # 直接查询cases表获取数据
         cases_data = querys('select * from cases')
         
         print(f"从cases表获取到{len(cases_data) if cases_data else 0}条记录")
         
         # 转换数据格式为二维数组
         rows = []
+        is_maternal_data = False
         
         if cases_data and len(cases_data) > 0:
-            is_maternal_data = False
             
             for row in cases_data:
                 # 确保row是字典格式
@@ -805,6 +807,10 @@ def tableData():
                     row_dict = {columns[i]: row[i] for i in range(min(len(columns), len(row)))} if len(row) > 0 else {}
                 else:
                     row_dict = {}
+                
+                # 检查是否是孕产妇数据
+                if row_dict.get('type') and row_dict.get('type').lower() == 'maternal':
+                    is_maternal_data = True
                 
                 # 构建表格行数据
                 table_row = [
@@ -828,7 +834,6 @@ def tableData():
         else:
             # 如果没有数据，提供友好提示
             rows = [["暂无数据", "", "", "", "", "", "", "", "", "", "", "", ""]]
-            is_maternal_data = False
         
         print(f"最终处理的表格数据行数: {len(rows)}")
         
@@ -848,6 +853,14 @@ def tableData():
         return jsonify(response)
     except Exception as e:
         print(f"获取表格数据时出错: {e}")
+        # 返回错误响应
+        return jsonify({
+            'data': {
+                'isMaternal': False,
+                'rows': [[f"获取数据时发生错误: {str(e)}"]],
+                'headers': ['错误信息']
+            }
+        }), 500
         return jsonify({
             'data': {
                 'isMaternal': False,
@@ -858,6 +871,30 @@ def tableData():
         })
 
 
+
+# 预警系统统计API端点
+@app.route('/api/warning/statistics', methods=['GET'])
+def get_warning_statistics():
+    """获取预警统计数据"""
+    try:
+        # 模拟预警统计数据
+        stats = {
+            'critical_count': 5,
+            'high_count': 15,
+            'pending_count': 20,
+            'total_warnings': 40
+        }
+        
+        return jsonify({
+            'code': 200,
+            'message': '获取预警统计数据成功',
+            'data': stats
+        })
+    except Exception as e:
+        return jsonify({
+            'code': 500,
+            'message': f'获取预警统计数据失败: {str(e)}'
+        }), 500
 
 # 胎儿监护相关API端点
 @app.route('/api/fetal-monitoring/records', methods=['GET'])
@@ -977,4 +1014,5 @@ def start_fetal_monitoring():
 if __name__ == '__main__':
     print("医疗数据分析系统启动中...")
     print("请访问: http://localhost:8081")
-    app.run(debug=True, host='0.0.0.0', port=8081)
+    # 使用socketio.run代替app.run，以支持WebSocket连接
+    socketio.run(app, debug=True, host='0.0.0.0', port=8081)

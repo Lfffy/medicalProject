@@ -555,7 +555,7 @@ export default {
         priority: this.filters.priority
       }
       
-      this.$http.get('/nutrition/advice', { params })
+      this.$http.get('/api/nutrition/advice', { params })
         .then(response => {
           const data = response.data.data
           this.nutritionAdvice = data.advice || []
@@ -570,7 +570,7 @@ export default {
     },
     
     loadStatistics() {
-      this.$http.get('/nutrition/statistics')
+      this.$http.get('/api/nutrition/statistics')
         .then(response => {
           const data = response.data.data
           this.stats = {

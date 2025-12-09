@@ -646,7 +646,7 @@ export default {
         status: this.filters.status
       }
       
-      this.$http.get('/warning/records', { params })
+      this.$http.get('/api/warning/records', { params })
         .then(response => {
           const data = response.data.data
           this.warningRecords = data.warnings || []
@@ -663,7 +663,7 @@ export default {
     loadRealtimeWarnings() {
       this.realtimeLoading = true
       
-      this.$http.get('/warning/realtime')
+      this.$http.get('/api/warning/realtime')
         .then(response => {
           this.realtimeWarnings = response.data.data.warnings || []
         })
@@ -676,7 +676,7 @@ export default {
     },
     
     loadStatistics() {
-      this.$http.get('/warning/statistics')
+      this.$http.get('/api/warning/statistics')
         .then(response => {
           const data = response.data.data
           this.stats = {

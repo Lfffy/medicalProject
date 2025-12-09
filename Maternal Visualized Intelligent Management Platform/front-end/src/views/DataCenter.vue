@@ -437,7 +437,7 @@
 </template>
 
 <script>
-import axios from 'axios'
+
 
 export default {
   name: 'DataCenter',
@@ -641,7 +641,7 @@ export default {
     // 加载表格数据
     loadTableData() {
       this.loading = true
-      axios.get('/api/data/list', {
+      this.$http.get('/api/data/list', {
         params: {
           page: this.currentPage,
           size: this.pageSize,
@@ -720,8 +720,7 @@ export default {
       try {
         await this.$refs.medicalFormRef.validate()
         this.submitting = true
-        
-        const response = await axios.post('/api/data/medical', this.medicalForm)
+        const response = await this.$http.post('/api/data/medical', this.medicalForm)
         if (response.data.code === 200) {
           this.$message.success('数据提交成功')
           this.resetMedicalForm()
@@ -742,8 +741,7 @@ export default {
       try {
         await this.$refs.maternalFormRef.validate()
         this.submitting = true
-        
-        const response = await axios.post('/api/data/maternal', this.maternalForm)
+        const response = await this.$http.post('/api/data/maternal', this.maternalForm)
         if (response.data.code === 200) {
           this.$message.success('数据提交成功')
           this.resetMaternalForm()
@@ -803,7 +801,7 @@ export default {
     // 加载导入历史
     async loadImportHistory() {
       try {
-        const response = await axios.get('/api/data/import-history')
+        const response = await this.$http.get('/api/data/import-history')
         if (response.data.code === 200) {
           this.importHistory = response.data.data
         }
@@ -820,7 +818,7 @@ export default {
     // 导出数据
     async exportData() {
       try {
-        const response = await axios.get('/api/data/export', {
+        const response = await this.$http.get('/api/data/export', {
           responseType: 'blob'
         })
         
@@ -867,7 +865,7 @@ export default {
           type: 'warning'
         })
         
-        const response = await axios.delete(`/api/data/${record.id}`)
+        const response = await this.$http.delete(`/api/data/${record.id}`)
         if (response.data.code === 200) {
           this.$message.success('删除成功')
           this.loadTableData()

@@ -114,8 +114,8 @@ export default {
       try {
         this.connectionStatus = 'connecting'
         
-        // 使用Socket.IO客户端连接
-        this.socket = io('http://localhost:8081', {
+        // 使用相对路径连接Socket.IO，通过代理转发到后端
+        this.socket = io('', {
           transports: ['websocket', 'polling'],
           timeout: 10000,
           forceNew: true,
