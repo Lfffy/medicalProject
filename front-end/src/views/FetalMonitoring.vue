@@ -551,7 +551,7 @@ export default {
         monitoring_status: this.filters.monitoringStatus
       }
       
-      this.$http.get('/api/fetal-monitoring/records', { params })
+      this.$http.get('/fetal-monitoring/records', { params })
         .then(response => {
           const data = response.data.data
           this.monitoringRecords = data.records || []
@@ -566,7 +566,7 @@ export default {
     },
     
     loadStatistics() {
-      this.$http.get('/api/fetal-monitoring/statistics')
+      this.$http.get('/fetal-monitoring/statistics')
         .then(response => {
           const data = response.data.data
           this.stats = {
@@ -735,7 +735,7 @@ export default {
         
         this.starting = true
         
-        this.$http.post('/api/fetal-monitoring/start', this.monitoringForm)
+        this.$http.post('/fetal-monitoring/start', this.monitoringForm)
           .then(response => {
             this.$message.success('监测已开始')
             this.monitoringDialogVisible = false

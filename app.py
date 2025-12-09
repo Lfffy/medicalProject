@@ -1,8 +1,9 @@
-from flask import Flask,request,jsonify,render_template,send_from_directory,redirect
+from flask import Flask,request,jsonify,render_template,send_from_directory,redirect,session,url_for,flash,send_file
 from flask_cors import CORS
 from flask_socketio import SocketIO
 from utils.getAllData import *
 from datetime import datetime
+import time
 
 app = Flask(__name__)
 app.secret_key = 'medical_data_analysis_secret_key_2024'  # 设置密钥
@@ -46,6 +47,12 @@ from monitoring_api import monitoring_bp
 # 导入孕产妇风险预测API蓝图
 from maternal_risk_api import maternal_risk_bp
 
+# 导入预警API蓝图
+from warning_api import warning_bp
+
+# 导入营养建议API蓝图
+from nutrition_api import nutrition_bp
+
 # 注册数据管理API蓝图
 app.register_blueprint(data_bp)
 
@@ -73,8 +80,11 @@ app.register_blueprint(monitoring_bp)
 # 注册机器学习API蓝图（已注释，因为模块不存在）
 # app.register_blueprint(ml_bp)
 
-# 注册孕产妇风险预测API蓝图
-app.register_blueprint(maternal_risk_bp)
+# 注册预警API蓝图
+app.register_blueprint(warning_bp)
+
+# 注册营养建议API蓝图
+app.register_blueprint(nutrition_bp)
 
 # 初始化AI聊天服务
 from ai_chat_service import init_ai_chat_service
@@ -769,95 +779,73 @@ def hospital_management():
 @app.route('/tableData',methods=['GET','POST'])
 def tableData():
     try:
-        # 先尝试获取通过视图返回的数据（包含原始cases表需要的字段）
-        tableDataList = getAllCasesData()
+        print("开始处理tableData请求...")
         
-        # 添加调试信息
-        if tableDataList:
-            print("数据库返回的字段:", list(tableDataList[0].keys()))
+        # 直接查询cases表获取数据
+        from utils.query import querys
+        cases_data = querys('select * from cases')
+        
+        print(f"从cases表获取到{len(cases_data) if cases_data else 0}条记录")
+        
+        # 转换数据格式为二维数组
+        rows = []
+        
+        if cases_data and len(cases_data) > 0:
+            is_maternal_data = False
+            
+            for row in cases_data:
+                # 确保row是字典格式
+                if hasattr(row, 'keys'):
+                    row_dict = dict(row)
+                elif hasattr(row, '__iter__'):
+                    # 如果是元组，手动创建字典
+                    columns = ['id', 'type', 'gender', 'age', 'time', 'description', 'doctor', 
+                              'hospital', 'department', 'details_link', 'height', 'weight', 
+                              'duration', 'allergy_history', 'created_at', 'updated_at']
+                    row_dict = {columns[i]: row[i] for i in range(min(len(columns), len(row)))} if len(row) > 0 else {}
+                else:
+                    row_dict = {}
+                
+                # 构建表格行数据
+                table_row = [
+                    row_dict.get('type', ''),
+                    '男' if row_dict.get('gender', 1) == 1 else '女',
+                    str(row_dict.get('age', '')),
+                    row_dict.get('time', row_dict.get('created_at', '')),
+                    row_dict.get('description', ''),
+                    row_dict.get('doctor', ''),
+                    row_dict.get('hospital', ''),
+                    row_dict.get('department', ''),
+                    row_dict.get('details_link', ''),
+                    str(row_dict.get('height', '')) if row_dict.get('height') is not None else '',
+                    str(row_dict.get('weight', '')) if row_dict.get('weight') is not None else '',
+                    str(row_dict.get('duration', '')) + '天' if row_dict.get('duration') is not None else '',
+                    row_dict.get('allergy_history', '')
+                ]
+                # 确保所有字段都是字符串且不为None
+                table_row = [str(cell) if cell is not None else '' for cell in table_row]
+                rows.append(table_row)
         else:
-            print("数据库返回空数据")
+            # 如果没有数据，提供友好提示
+            rows = [["暂无数据", "", "", "", "", "", "", "", "", "", "", "", ""]]
+            is_maternal_data = False
         
-        # 重新定义数据类型判断逻辑，优先检查是否是通过视图返回的数据
-        is_maternal_data = False
+        print(f"最终处理的表格数据行数: {len(rows)}")
         
-        # 转换数据格式为前端期望的二维数组
-        resultData = []
+        # 固定表头
+        headers = ['类型', '性别', '年龄', '时间', '描述', '医生', '医院', '科室', '详情链接', '身高', '体重', '患病时长', '过敏史']
         
-        if tableDataList:
-            # 检查是否是通过视图返回的原始cases表格式数据
-            if 'type' in tableDataList[0] or 'content' in tableDataList[0]:
-                # 这是原始cases表格式的数据
-                is_maternal_data = False
-                for item in tableDataList:
-                    row = [
-                        item.get('type', ''),
-                        item.get('gender', ''),
-                        item.get('age', ''),
-                        item.get('time', ''),
-                        item.get('content', ''),
-                        item.get('docName', ''),
-                        item.get('docHospital', ''),
-                        item.get('department', ''),
-                        item.get('detailUrl', ''),
-                        item.get('height', ''),
-                        item.get('weight', ''),
-                        item.get('illDuration', ''),
-                        item.get('allergy', '')
-                    ]
-                    # 确保所有字段都有值，避免显示问题
-                    row = [str(cell) if cell is not None else '' for cell in row]
-                    resultData.append(row)
-            else:
-                # 这是maternal_info表的数据
-                is_maternal_data = True
-                for item in tableDataList:
-                    row = [
-                        item.get('pregnancy_status', '') or '待补充',  # 孕期状态
-                        item.get('gender', '女'),
-                        str(item.get('age', '')) or '待补充',
-                        str(item.get('diagnosis_date', '')) or '待补充',  # 确保是字符串格式
-                        f"{item.get('name', '') or '待补充'}，孕期第{item.get('gestational_week', '0')}周",
-                        '待补充',  # 医生
-                        item.get('hospital', '') or '待补充',
-                        item.get('department', '') or '待补充',
-                        f"/maternal/{item.get('id', '') or '0'}",
-                        str(item.get('weight', '待补充')),
-                        item.get('blood_pressure', '待补充'),
-                        str(item.get('risk_level', '待补充')),
-                        str(item.get('expected_date', '待补充'))
-                    ]
-                    resultData.append(row)
-        else:
-            # 如果没有数据，提供默认行
-            resultData = [["暂无数据", "", "", "", "", "", "", "", "", "", "", "", ""]]
-        
-        print(f"返回的表格数据条数: {len(resultData)}")
-        print(f"数据类型: {'孕产妇数据' if is_maternal_data else '原始医疗数据'}")
-        
-        # 返回前端期望的格式
-        return jsonify({
+        # 返回标准格式数据
+        response = {
             'data': {
                 'isMaternal': is_maternal_data,
-                'rows': resultData,  # 返回二维数组
-                'headers': ['类型', '性别', '年龄', '时间', '描述', '医生', '医院', '科室', '详情链接', '身高', '体重', '患病时长', '过敏史'],
-                'rowMapping': {
-                    'type': '类型',
-                    'gender': '性别',
-                    'age': '年龄',
-                    'time': '时间',
-                    'content': '描述',
-                    'docName': '医生',
-                    'docHospital': '医院',
-                    'department': '科室',
-                    'detailUrl': '详情链接',
-                    'height': '身高',
-                    'weight': '体重',
-                    'illDuration': '患病时长',
-                    'allergy': '过敏史'
-                }
+                'rows': rows,
+                'headers': headers
             }
-        })
+        }
+        
+        print("准备返回tableData响应")
+        return jsonify(response)
     except Exception as e:
         print(f"获取表格数据时出错: {e}")
         return jsonify({
@@ -870,6 +858,120 @@ def tableData():
         })
 
 
+
+# 胎儿监护相关API端点
+@app.route('/api/fetal-monitoring/records', methods=['GET'])
+def get_fetal_monitoring_records():
+    """获取胎儿监护记录"""
+    try:
+        # 获取查询参数
+        page = request.args.get('page', 1, type=int)
+        page_size = request.args.get('page_size', 10, type=int)
+        patient_name = request.args.get('patient_name', '')
+        hospital = request.args.get('hospital', '')
+        monitoring_status = request.args.get('monitoring_status', '')
+        
+        # 模拟数据
+        total = 20
+        records = []
+        for i in range((page-1)*page_size, min(page*page_size, total)):
+            records.append({
+                'id': i + 1,
+                'patient_name': f'患者{i+1}',
+                'hospital': '妇产科医院',
+                'monitoring_date': '2024-01-15',
+                'gestational_week': 32,
+                'fetal_heart_rate': 145,
+                'amniotic_fluid': '正常',
+                'placenta': '前壁',
+                'monitoring_status': '正常',
+                'doctor': '张医生'
+            })
+        
+        return jsonify({
+            'code': 200,
+            'message': '获取胎儿监护记录成功',
+            'data': {
+                'records': records,
+                'total': total,
+                'page': page,
+                'page_size': page_size
+            }
+        })
+    except Exception as e:
+        return jsonify({
+            'code': 500,
+            'message': f'获取胎儿监护记录失败: {str(e)}'
+        }), 500
+
+@app.route('/api/fetal-monitoring/statistics', methods=['GET'])
+def get_fetal_monitoring_statistics():
+    """获取胎儿监护统计数据"""
+    try:
+        # 模拟统计数据
+        statistics = {
+            'total_monitoring': 156,
+            'normal_cases': 132,
+            'abnormal_cases': 24,
+            'high_risk_cases': 8,
+            'week_distribution': {
+                '28-32周': 45,
+                '32-36周': 67,
+                '36周以上': 44
+            },
+            'daily_trend': [
+                {'date': '01-10', 'count': 12},
+                {'date': '01-11', 'count': 15},
+                {'date': '01-12', 'count': 18},
+                {'date': '01-13', 'count': 14},
+                {'date': '01-14', 'count': 16},
+                {'date': '01-15', 'count': 20}
+            ]
+        }
+        
+        return jsonify({
+            'code': 200,
+            'message': '获取胎儿监护统计数据成功',
+            'data': statistics
+        })
+    except Exception as e:
+        return jsonify({
+            'code': 500,
+            'message': f'获取胎儿监护统计数据失败: {str(e)}'
+        }), 500
+
+@app.route('/api/fetal-monitoring/start', methods=['POST'])
+def start_fetal_monitoring():
+    """开始胎儿监护会话"""
+    try:
+        # 获取请求数据
+        data = request.get_json()
+        
+        # 模拟开始监护会话
+        monitoring_session = {
+            'session_id': f'monitor-{int(time.time())}',
+            'maternal_id': data.get('maternal_id', 0),
+            'patient_name': data.get('patient_name', ''),
+            'start_time': datetime.now().isoformat(),
+            'gestational_week': data.get('gestational_week', 0),
+            'status': 'active',
+            'initial_data': {
+                'fetal_heart_rate': 140,
+                'fetal_movement': 0,
+                'uterine_contractions': 0
+            }
+        }
+        
+        return jsonify({
+            'code': 200,
+            'message': '胎儿监护会话已成功开始',
+            'data': monitoring_session
+        })
+    except Exception as e:
+        return jsonify({
+            'code': 500,
+            'message': f'开始胎儿监护会话失败: {str(e)}'
+        }), 500
 
 # 启动应用
 if __name__ == '__main__':
