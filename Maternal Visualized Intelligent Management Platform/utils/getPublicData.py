@@ -1,7 +1,7 @@
 import pandas as pd
 import numpy as np
+from datetime import datetime
 from utils.query import querys
-from utils.mock_data import getMockCasesData, getMockMaternalData
 
 def getAllCasesData():
     """获取所有病例数据（优先使用孕产妇数据）"""
@@ -19,19 +19,30 @@ def getAllCasesData():
                     # 确保我们可以正确转换为字典
                     if hasattr(row, '__iter__'):
                         # 如果row是元组，我们需要手动创建字典
-                        columns = ['id', 'patient_id', 'last_menstrual_period', 'expected_date_delivery', 
-                                  'current_gestational_week', 'parity', 'gravidity', 'abortion_count', 
-                                  'live_birth_count', 'preterm_birth_count', 'stillbirth_count', 
-                                  'ectopic_pregnancy_count', 'previous_cesarean', 'pregnancy_complications', 
-                                  'risk_level', 'risk_factors', 'prenatal_care_count', 'last_prenatal_date', 
-                                  'expected_delivery_hospital', 'delivery_plan', 'created_at', 'updated_at']
+                        columns = ['id', 'name', 'age', 'gestational_weeks', 'pregnancy_count', 'parity', 
+                                  'pregnancy_type', 'weight', 'height', 'systolic_pressure', 
+                                  'diastolic_pressure', 'notes', 'created_at', 'updated_at']
                         row_dict = {columns[i]: row[i] for i in range(min(len(columns), len(row)))} if len(row) > 0 else {}
+                        # 添加必要的字段以兼容前端
+                        row_dict['pregnancy_status'] = '正常妊娠' if 'notes' not in row_dict or '异常' not in row_dict['notes'] else '异常妊娠'
+                        row_dict['risk_level'] = '低风险'
+                        row_dict['blood_pressure'] = f"{row_dict.get('systolic_pressure', '0')}/{row_dict.get('diastolic_pressure', '0')}"
+                        row_dict['hospital'] = '妇产科医院'
+                        row_dict['department'] = '产科'
+                        row_dict['gestational_week'] = row_dict.get('gestational_weeks', 0)
                         result.append(row_dict)
                     elif hasattr(row, 'keys'):
                         # 如果row已经有keys方法（如sqlite3.Row）
-                        result.append(dict(row))
+                        row_dict = dict(row)
+                        # 添加必要的字段以兼容前端
+                        row_dict['pregnancy_status'] = '正常妊娠' if 'notes' not in row_dict or '异常' not in row_dict['notes'] else '异常妊娠'
+                        row_dict['risk_level'] = '低风险'
+                        row_dict['blood_pressure'] = f"{row_dict.get('systolic_pressure', '0')}/{row_dict.get('diastolic_pressure', '0')}"
+                        row_dict['hospital'] = '妇产科医院'
+                        row_dict['department'] = '产科'
+                        row_dict['gestational_week'] = row_dict.get('gestational_weeks', 0)
+                        result.append(row_dict)
                 print(f"成功获取{len(result)}条真实孕产妇数据")
-                # 确保返回的是数据库数据而不是模拟数据
                 return result
         
         # 检查是否有普通病例表
@@ -40,11 +51,21 @@ def getAllCasesData():
             cases_data = querys('select * from cases')
             if cases_data and len(cases_data) > 0:
                 print("从数据库获取真实普通病例数据")
-                # 将sqlite3.Row对象转换为字典列表
+                # 将sqlite3.Row对象转换为字典列表，并进行字段映射
                 result = []
                 for row in cases_data:
                     if hasattr(row, 'keys'):
-                        result.append(dict(row))
+                        row_dict = dict(row)
+                        # 字段映射，确保与前端期望的字段名一致
+                        row_dict['content'] = row_dict.pop('description', '')  # 将description映射为content
+                        row_dict['docName'] = row_dict.pop('doctor', '')      # 将doctor映射为docName
+                        row_dict['docHospital'] = row_dict.pop('hospital', '')  # 将hospital映射为docHospital
+                        row_dict['detailUrl'] = row_dict.pop('details_link', '')  # 将details_link映射为detailUrl
+                        row_dict['illDuration'] = str(row_dict.get('duration', 0)) + '天'  # 转换duration为illDuration
+                        row_dict['allergy'] = row_dict.pop('allergy_history', '无')  # 将allergy_history映射为allergy
+                        # 性别转换：1=男, 2=女
+                        row_dict['gender'] = '男' if row_dict.get('gender', 1) == 1 else '女'
+                        result.append(row_dict)
                 return result
         
         # 检查是否有medical_data表
@@ -53,20 +74,31 @@ def getAllCasesData():
             medical_data = querys('select * from medical_data')
             if medical_data and len(medical_data) > 0:
                 print("从数据库获取真实医疗数据")
-                # 将sqlite3.Row对象转换为字典列表
+                # 将sqlite3.Row对象转换为字典列表，并添加必要字段以兼容前端
                 result = []
                 for row in medical_data:
                     if hasattr(row, 'keys'):
-                        result.append(dict(row))
+                        row_dict = dict(row)
+                        # 添加必要的字段以兼容前端
+                        row_dict['type'] = row_dict.get('disease_type', '常规检查')
+                        row_dict['time'] = row_dict.get('created_at', datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
+                        row_dict['content'] = row_dict.get('symptoms', '无明显症状')
+                        row_dict['docName'] = '医生'
+                        row_dict['docHospital'] = '综合医院'
+                        row_dict['department'] = row_dict.get('disease_type', '内科')
+                        row_dict['detailUrl'] = f"/medical/{row_dict.get('id', 0)}"
+                        row_dict['illDuration'] = '1天'
+                        row_dict['allergy'] = '无'
+                        result.append(row_dict)
                 return result
         
-        # 如果数据库中没有任何表或数据，返回空列表而不是模拟数据
+        # 如果数据库中没有任何表或数据，返回空列表
         print("警告：数据库中没有找到任何有效表或数据")
         return []
         
     except Exception as e:
         print(f"获取数据时发生异常: {e}")
-        # 发生异常时返回空列表而不是模拟数据
+        # 发生异常时返回空列表
         return []
 
 def getMaternalCasesData():

@@ -41,11 +41,11 @@ export default {
         delay(ms){
             return new Promise(resolve => setTimeout(resolve, ms));
         },
-        async getTableList(){
-            console.log('开始获取表格数据...')
+        async getTableList() {
+            console.log('开始获取表格数据...');
             try {
-                this.loading = true
-                const res = await this.$http.get('/tableData')
+                this.loading = true;
+                const res = await this.$http.get('/tableData');
                 console.log('TableData响应:', res);
                 
                 // 安全地访问响应数据

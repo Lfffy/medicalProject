@@ -646,7 +646,7 @@ export default {
         status: this.filters.status
       }
       
-      this.$http.get('/api/warning/records', { params })
+      this.$http.get('/warning/records', { params })
         .then(response => {
           const data = response.data.data
           this.warningRecords = data.warnings || []
@@ -663,7 +663,7 @@ export default {
     loadRealtimeWarnings() {
       this.realtimeLoading = true
       
-      this.$http.get('/api/warning/realtime')
+      this.$http.get('/warning/realtime')
         .then(response => {
           this.realtimeWarnings = response.data.data.warnings || []
         })
@@ -676,7 +676,7 @@ export default {
     },
     
     loadStatistics() {
-      this.$http.get('/api/warning/statistics')
+      this.$http.get('/warning/statistics')
         .then(response => {
           const data = response.data.data
           this.stats = {
@@ -880,8 +880,8 @@ export default {
         this.saving = true
         
         const url = this.isEdit 
-          ? `/api/warning/records/${this.warningForm.id}`
-          : '/api/warning/records'
+          ? `/warning/records/${this.warningForm.id}`
+          : '/warning/records'
         const method = this.isEdit ? 'put' : 'post'
         
         this.$http[method](url, this.warningForm)
@@ -906,7 +906,7 @@ export default {
         cancelButtonText: '取消',
         type: 'warning'
       }).then(() => {
-        this.$http.delete(`/api/warning/records/${warning.id}`)
+        this.$http.delete(`/warning/records/${warning.id}`)
           .then(() => {
             this.$message.success('删除成功')
             this.loadWarningRecords()
@@ -939,7 +939,7 @@ export default {
         
         this.handling = true
         
-        this.$http.put(`/api/warning/records/${this.currentWarning.id}/handle`, this.handleForm)
+        this.$http.put(`/warning/records/${this.currentWarning.id}/handle`, this.handleForm)
           .then(() => {
             this.$message.success('处理成功')
             this.handleDialogVisible = false
@@ -963,7 +963,7 @@ export default {
       }
       
       const ids = this.selectedWarnings.map(warning => warning.id)
-      this.$http.post('/api/warning/export', { ids }, { responseType: 'blob' })
+      this.$http.post('/warning/export', { ids }, { responseType: 'blob' })
         .then(response => {
           const blob = new Blob([response.data])
           const link = document.createElement('a')
@@ -994,7 +994,7 @@ export default {
         ]
       }).then(({ value }) => {
         const ids = this.selectedWarnings.map(warning => warning.id)
-        this.$http.put('/api/warning/records/batch-status', { ids, status: value })
+        this.$http.put('/warning/records/batch-status', { ids, status: value })
           .then(() => {
             this.$message.success('批量更新成功')
             this.loadWarningRecords()
@@ -1007,7 +1007,7 @@ export default {
     },
     
     exportWarnings() {
-      this.$http.post('/api/warning/export', {}, { responseType: 'blob' })
+      this.$http.post('/warning/export', {}, { responseType: 'blob' })
         .then(response => {
           const blob = new Blob([response.data])
           const link = document.createElement('a')
@@ -1145,7 +1145,7 @@ export default {
 .warning-system-container {
   padding: 20px;
   height: 100%;
-  background-color: #fdf2f8;
+    background-color: #f5f7fa;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
   
   .warning-system-content {
@@ -1160,10 +1160,10 @@ export default {
       align-items: center;
       margin-bottom: 30px;
       padding: 25px 30px;
-      background: linear-gradient(135deg, #fff0f5, #fce4ec);
+      background: #ffffff;
       border-radius: 16px;
       box-shadow: 0 6px 16px rgba(0, 0, 0, 0.1);
-      border: 2px solid #ff69b4;
+      border: 2px solid #dcdfe6;
       
       h2 {
         color: #2c3e50;
@@ -1178,7 +1178,7 @@ export default {
           content: "";
           width: 4px;
           height: 30px;
-          background: linear-gradient(135deg, #ff69b4, #ff85a2);
+          background: linear-gradient(135deg, #409eff, #66b1ff);
           border-radius: 2px;
         }
       }
@@ -1187,9 +1187,9 @@ export default {
     .filter-section {
       margin-bottom: 30px;
       padding: 25px;
-      background: linear-gradient(135deg, #fff0f5, #fce4ec);
+      background: #ffffff;
       border-radius: 12px;
-      border: 2px solid #ff69b4;
+      border: 2px solid #dcdfe6;
     }
     
     .stats-section {
@@ -1204,11 +1204,11 @@ export default {
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
         margin-bottom: 20px;
         transition: transform 0.3s, box-shadow 0.3s;
-        border: 2px solid #ff69b4;
+        border: 2px solid #dcdfe6;
         
         &:hover {
           transform: translateY(-8px);
-          box-shadow: 0 12px 24px rgba(255, 105, 180, 0.2);
+          box-shadow: 0 12px 24px rgba(64, 158, 255, 0.15);
         }
         
         &.critical {
@@ -1232,12 +1232,12 @@ export default {
         }
         
         &.medium {
-          border-color: #ff69b4;
-          background: linear-gradient(135deg, #fff0f5, #fce4ec);
-          
-          .stat-icon {
-            color: #ff69b4;
-            background: linear-gradient(135deg, #ff69b4, #ff85a2);
+          border-color: #409eff;
+        background: linear-gradient(135deg, #f0f9ff, #e0f2fe);
+        
+        .stat-icon {
+          color: #409eff;
+          background: linear-gradient(135deg, #409eff, #66b1ff);
           }
         }
         
@@ -1290,11 +1290,11 @@ export default {
         border-radius: 16px;
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
         margin-bottom: 20px;
-        border: 2px solid #ff69b4;
-        background: linear-gradient(135deg, #fff, #fff0f5);
+        border: 2px solid #dcdfe6;
+          background: #ffffff;
         
         h3 {
-          color: #ff69b4;
+          color: #409eff;
           margin-bottom: 20px;
           text-align: center;
           font-size: 20px;
@@ -1309,11 +1309,11 @@ export default {
       /* 局部覆盖dv-border-box-8和dv-border-box-10颜色 */
       .dv-border-box-8,
       .dv-border-box-10 {
-        --primary-color: #ff69b4 !important;
-        --secondary-color: #ff85a2 !important;
-        background: white !important;
-        border-radius: 16px !important;
-        border: 2px solid #ff69b4 !important;
+        --primary-color: #409eff !important;
+      --secondary-color: #66b1ff !important;
+      background: white !important;
+      border-radius: 16px !important;
+      border: 2px solid #409eff !important;
         box-shadow: none !important;
       }
       
@@ -1326,15 +1326,15 @@ export default {
       .dv-border-box-10 .dv-border-svg path,
       .dv-border-box-10 .dv-border-svg polygon,
       .dv-border-box-10 .dv-border-svg circle {
-        fill: #ff69b4 !important;
-        stroke: #ff69b4 !important;
+        fill: #409eff !important;
+        stroke: #409eff !important;
         stroke-dasharray: none !important;
         stroke-width: 1px !important;
       }
       
       .dv-border-box-8 text,
       .dv-border-box-10 text {
-        fill: #ff69b4 !important;
+        fill: #409eff !important;
         stroke: none !important;
       }
       
@@ -1342,7 +1342,7 @@ export default {
       .dv-border-box-8::before,
       .dv-border-box-8::after {
         box-shadow: none !important;
-        border-color: #ff69b4 !important;
+        border-color: #409eff !important;
       }
     }
     
@@ -1354,7 +1354,7 @@ export default {
         background: white;
         border-radius: 16px;
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-        border: 2px solid #ff69b4;
+        border: 2px solid #dcdfe6;
         
         h3 {
           color: #2c3e50;
@@ -1369,7 +1369,7 @@ export default {
             content: "";
             width: 4px;
             height: 24px;
-            background: linear-gradient(135deg, #ff69b4, #ff85a2);
+            background: linear-gradient(135deg, #409eff, #66b1ff);
             border-radius: 2px;
           }
         }
@@ -1382,13 +1382,13 @@ export default {
             padding: 20px;
             margin-bottom: 15px;
             border-radius: 12px;
-            border: 2px solid #ff69b4;
-            background: linear-gradient(135deg, #fff0f5, #fce4ec);
+            border: 2px solid #dcdfe6;
+            background: #ffffff;
             transition: transform 0.2s, box-shadow 0.2s;
             
             &:hover {
               transform: translateX(5px);
-              box-shadow: 0 6px 16px rgba(255, 105, 180, 0.15);
+              box-shadow: 0 6px 16px rgba(64, 158, 255, 0.15);
             }
             
             &.critical {
@@ -1402,8 +1402,8 @@ export default {
             }
             
             &.medium {
-              border-color: #ff69b4;
-              background: linear-gradient(135deg, #fff0f5, #fce4ec);
+              border-color: #E6A23C;
+              background: linear-gradient(135deg, #f0f9ff, #e0f2fe);
             }
             
             &.low {
@@ -1453,18 +1453,18 @@ export default {
       margin-bottom: 30px;
       
       .table-content {
-        padding: 25px;
-        background: white;
-        border-radius: 16px;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-        border: 2px solid #ff69b4;
+          padding: 25px;
+          background: white;
+          border-radius: 16px;
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+          border: 2px solid #dcdfe6;
         
         .el-table {
           border-radius: 12px;
           overflow: hidden;
           
           th {
-            background: linear-gradient(135deg, #fff0f5, #fce4ec);
+            background: #f5f7fa;
             color: #2c3e50;
             font-weight: 600;
             padding: 15px;
@@ -1485,12 +1485,12 @@ export default {
       gap: 12px;
       margin-bottom: 30px;
       padding: 20px;
-      background: linear-gradient(135deg, #fff0f5, #fce4ec);
+      background: #f5f7fa;
       border-radius: 12px;
-      border: 2px solid #ff69b4;
+      border: 2px solid #dcdfe6;
       
       .selected-info {
-        color: #ff69b4;
+        color: #409eff;
         font-weight: 600;
         margin-left: auto;
         font-size: 14px;
@@ -1521,10 +1521,10 @@ export default {
       .detail-section {
         margin-top: 25px;
         padding-top: 20px;
-        border-top: 2px solid #ff69b4;
+        border-top: 2px solid #dcdfe6;
         
         h4 {
-          color: #ff69b4;
+          color: #409eff;
           margin-bottom: 15px;
           font-size: 16px;
           font-weight: 600;
