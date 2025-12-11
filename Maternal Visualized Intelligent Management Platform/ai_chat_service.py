@@ -7,11 +7,12 @@ import requests
 import hashlib
 import os
 from datetime import datetime
+import os
+from openai import OpenAI
 
-# 移除OpenAI依赖，使用系统内置响应
+# 启用火山方舟大模型依赖
 builtin_available = True
-openai_available = False
-OpenAI = None
+openai_available = True
 
 class AIChatService:
     def __init__(self, socketio: SocketIO):
@@ -19,15 +20,20 @@ class AIChatService:
         self.active_connections = {}
         self.user_sessions = {}
         
-        # AI助手API配置 - 使用环境变量获取API Key
-        # 移除API Key相关配置，直接使用内置响应系统
+        # AI助手API配置
+        self.api_key = os.environ.get('ARK_API_KEY', 'ceadb27c-39e4-4527-924d-a8bb5e81758e')  # 从环境变量获取或使用提供的密钥
         
-        # 初始化内置响应系统
-        self.client = None
-        print("已初始化内置响应系统")
+        # 初始化火山方舟OpenAI兼容客户端
+        self.client = OpenAI(
+            # 火山方舟API地址
+            base_url="https://ark.cn-beijing.volces.com/api/v3",
+            # 使用API密钥
+            api_key=self.api_key,
+        )
+        print("已初始化火山方舟大模型客户端")
         
         # AI助手模型配置
-        self.ai_model = "doubao-seed-1-6-251015"  # 使用您提供的模型ID
+        self.ai_model = "ep-20250514110428-r589j"  # 使用用户提供的火山方舟推理接入点ID
         
         # 注册WebSocket事件处理器
         self.register_handlers()
@@ -123,9 +129,101 @@ class AIChatService:
             return self.limit_response_length(cleaned_mock, 500)
     
     def call_ai_api(self, message):
-        """使用真实预测逻辑生成响应"""
-        # 直接返回空字符串，让generate_ai_response方法使用真实预测逻辑
-        return ""
+        """调用OpenAI API生成自然语言响应"""
+        try:
+            # 导入预测器，用于专业医疗数据的处理
+            from maternal_risk_predictor import MaternalRiskPredictor
+            import re
+            
+            # 初始化预测器
+            predictor = MaternalRiskPredictor()
+            
+            # 检查是否包含医疗风险评估相关的关键词
+            medical_keywords = ['子痫前期', '子痫', '高血压', '早产', '提前分娩', 'BMI', '血压', '年龄']
+            has_medical_keyword = any(keyword in message for keyword in medical_keywords)
+            
+            # 如果包含医疗关键词，先获取专业的医疗评估结果
+            medical_analysis = ""
+            if has_medical_keyword:
+                # 解析用户输入，提取关键信息
+                age_match = re.search(r'(?:今年)?(?:年龄)?(\d+)岁', message)
+                age = int(age_match.group(1)) if age_match else 30
+                
+                # 处理血压格式
+                blood_pressure_match = re.search(r'(?:血压)?(\d+)/(\d+)', message)
+                if blood_pressure_match:
+                    systolic = int(blood_pressure_match.group(1))
+                    diastolic = int(blood_pressure_match.group(2))
+                else:
+                    systolic_match = re.search(r'收缩压(\d+)', message)
+                    diastolic_match = re.search(r'舒张压(\d+)', message)
+                    systolic = int(systolic_match.group(1)) if systolic_match else 120
+                    diastolic = int(diastolic_match.group(1)) if diastolic_match else 80
+                
+                # 处理BMI格式
+                bmi_match = re.search(r'BMI\s*(\d+(?:\.\d+)?)', message)
+                bmi = float(bmi_match.group(1)) if bmi_match else 25.0
+                
+                # 创建患者数据
+                patient_data = {
+                    'age': age,
+                    'systolic_pressure': systolic,
+                    'diastolic_pressure': diastolic,
+                    'bmi': bmi
+                }
+                
+                # 进行专业医疗评估
+                if '子痫前期' in message or '子痫' in message or '高血压' in message:
+                    result = predictor.predict_preeclampsia_risk(patient_data)
+                    risk_level = result.get('risk_level', '未知')
+                    confidence = result.get('confidence', 0.0)
+                    medical_analysis = f"子痫前期风险评估：等级为{risk_level}，置信度为{confidence:.2f}。"
+                elif '早产' in message or '提前分娩' in message:
+                    result = predictor.predict_preterm_birth_risk(patient_data)
+                    risk_level = result.get('risk_level', '未知')
+                    confidence = result.get('confidence', 0.0)
+                    medical_analysis = f"早产风险评估：等级为{risk_level}，置信度为{confidence:.2f}。"
+                else:
+                    # 调用综合风险评估
+                    result = predictor.predict_comprehensive_risk(patient_data)
+                    if result:
+                        preeclampsia_risk = result.get('preeclampsia', {}).get('risk_level', '未知')
+                        preterm_risk = result.get('preterm_birth', {}).get('risk_level', '未知')
+                        medical_analysis = f"综合风险评估：子痫前期风险等级为{preeclampsia_risk}，早产风险等级为{preterm_risk}。"
+                    else:
+                        medical_analysis = "无法提供准确的风险评估，请提供更多详细信息。"
+            
+            # 调用火山方舟大模型API生成自然语言响应
+            response = self.client.chat.completions.create(
+                model=self.ai_model,
+                messages=[
+                    {
+                        "role": "system",
+                        "content": "您是一位专业的医疗健康助手，基于以下医疗分析结果（如果有），用自然、友好的语言回答用户的问题。请避免使用过于专业的术语，确保回答通俗易懂。"
+                    },
+                    {
+                        "role": "user",
+                        "content": f"医疗分析结果：{medical_analysis}\n\n用户问题：{message}"
+                    }
+                ],
+                temperature=0.7,
+                max_tokens=1024,
+                top_p=1.0,
+                frequency_penalty=0.0,
+                presence_penalty=0.0
+            )
+            
+            # 获取AI生成的响应
+            ai_response = response.choices[0].message.content.strip()
+            return ai_response
+            
+        except Exception as e:
+            print(f'调用OpenAI API失败: {str(e)}')
+            # 如果OpenAI调用失败，使用内置的专业医疗评估作为备选
+            if has_medical_keyword and medical_analysis:
+                return f"{medical_analysis}建议您保持健康的生活方式，定期进行产检。"
+            else:
+                return "抱歉，AI服务暂时不可用，请稍后再试。"
     
     def clean_response_text(self, text):
         """清理响应文本中的乱码符号"""
