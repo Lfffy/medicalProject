@@ -303,12 +303,13 @@ npm run serve
 <img width="1950" height="1280" alt="image" src="https://github.com/user-attachments/assets/05f0133d-6724-4128-9a27-422d17f8fb68" />
 <img width="1131" height="1330" alt="image" src="https://github.com/user-attachments/assets/4832c6c1-9e9f-4c47-bdc7-db592e287ec1" />
 <img width="2053" height="1334" alt="image" src="https://github.com/user-attachments/assets/cb4852df-9397-4f4c-9ca7-c607dc298703" />
-
-
-
-
-
-
+<img width="1876" height="812" alt="image" src="https://github.com/user-attachments/assets/1c0dd2a1-bd0a-45fc-944d-7c4a07f9d9f4" />
+<img width="1857" height="802" alt="image" src="https://github.com/user-attachments/assets/8338892d-8e0d-48be-a7c8-a2037e56b834" />
+<img width="1851" height="786" alt="image" src="https://github.com/user-attachments/assets/2c7ed722-5ce5-46d3-8f9d-8c1fd1bc51ae" />
+<img width="1860" height="817" alt="image" src="https://github.com/user-attachments/assets/78bed6e8-ceed-414d-81b4-209e70e1ed39" />
+<img width="1825" height="761" alt="image" src="https://github.com/user-attachments/assets/4a0a030c-ef78-4daa-a164-e966887dd6d2" />
+<img width="1827" height="740" alt="image" src="https://github.com/user-attachments/assets/d18c3259-462f-46dd-83ab-0dd02cfc35f2" />
+<img width="1841" height="862" alt="image" src="https://github.com/user-attachments/assets/882626ba-f30d-4c18-9374-c5efe13f998e" />
 
 孕产妇健康预测算法通过 `maternal_risk_predictor.py` 实现，采用了多种先进技术，核心特点如下：
 
